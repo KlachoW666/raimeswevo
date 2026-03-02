@@ -18,6 +18,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
       {children}
     </PageContainer>
     <BottomNav />
+    <footer className="text-center pt-2 pb-3 text-[11px] text-[#8B949E] shrink-0" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+      @ZYPHEXAUTOTRAIDINGBOT
+    </footer>
   </div>
 );
 

@@ -43,24 +43,49 @@ npm install
 echo "Building for production..."
 npm run build
 
-# 5. Configure Nginx
+# 5. Configure Nginx with HTTPS for Mini App (by IP)
 echo "[5/6] Configuring Nginx..."
-DOMAIN="your-domain.com" # CHANGE THIS LATER
+SERVER_IP="${SERVER_IP:-188.127.230.83}"
+SSL_DIR="/etc/nginx/ssl/miniapp"
+mkdir -p "$SSL_DIR"
+
+# Self-signed certificate for IP (Let's Encrypt does not support IPs)
+if [ ! -f "$SSL_DIR/cert.pem" ]; then
+    echo "Generating self-signed SSL certificate for $SERVER_IP..."
+    openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+        -keyout "$SSL_DIR/key.pem" -out "$SSL_DIR/cert.pem" \
+        -subj "/CN=$SERVER_IP" \
+        -addext "subjectAltName=IP:$SERVER_IP"
+    chmod 600 "$SSL_DIR/key.pem"
+fi
 
 NGINX_CONF="/etc/nginx/sites-available/miniapp"
-cat > $NGINX_CONF << 'EOF'
+cat > $NGINX_CONF << NGINXEOF
 server {
     listen 80;
+    listen [::]:80;
     server_name _;
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name _;
+
+    ssl_certificate     $SSL_DIR/cert.pem;
+    ssl_certificate_key $SSL_DIR/key.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
 
     root /var/www/miniapp/promt/frontend/dist;
     index index.html;
 
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files \$uri \$uri/ /index.html;
     }
 }
-EOF
+NGINXEOF
 
 ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
@@ -71,11 +96,10 @@ echo "======================================"
 echo "          Setup Complete!             "
 echo "======================================"
 echo ""
-echo "Next steps:"
-echo "1. Point your domain A record to this server's IP address."
-echo "2. Edit /etc/nginx/sites-available/miniapp and replace '_' with your domain name."
-echo "3. Run SSL setup: certbot --nginx -d your-domain.com"
-echo "4. Reload nginx: systemctl reload nginx"
+echo "Mini App is served at: https://$SERVER_IP"
 echo ""
-echo "Your app is currently being served on HTTP (Port 80) from /var/www/miniapp/promt/frontend/dist"
+echo "In Telegram BotFather set Main App URL to:"
+echo "  https://$SERVER_IP"
+echo ""
+echo "Note: Self-signed certificate is used (no domain). If Telegram shows a warning, try adding a domain later and run: certbot --nginx -d your-domain.com"
 echo "======================================"

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // ====== TYPES ======
 
@@ -112,28 +113,34 @@ const mockAudit: AuditEntry[] = [];
 
 const uid = () => Math.random().toString(36).substring(2, 10);
 
+// ====== DEFAULT SETTINGS (used for initial state and rehydration) ======
+
+const defaultSettings: PlatformSettings = {
+    referralPercent: 5,
+    minWithdraw: 50,
+    maxDailyWithdraw: 1000,
+    enabledNetworks: [...ALL_NETWORKS],
+    defaultLanguage: 'ru',
+    maintenanceMode: false,
+    dailyProfitPercent: 5,
+    winrateByMode: { safe: 50, balanced: 65, aggressive: 85 },
+    enabledPairs: [...ALL_PAIRS],
+    maxConcurrentPairs: 10,
+    tradingSchedule: { start: '00:00', end: '23:59' },
+};
+
 // ====== STORE ======
 
-export const useAdminStore = create<AdminState>((set) => ({
-    users: mockUsers,
-    transactions: mockTransactions,
-    auditLog: mockAudit,
-    broadcasts: [],
-    settings: {
-        referralPercent: 5,
-        minWithdraw: 50,
-        maxDailyWithdraw: 1000,
-        enabledNetworks: [...ALL_NETWORKS],
-        defaultLanguage: 'ru',
-        maintenanceMode: false,
-        dailyProfitPercent: 5,
-        winrateByMode: { safe: 50, balanced: 65, aggressive: 85 },
-        enabledPairs: [...ALL_PAIRS],
-        maxConcurrentPairs: 10,
-        tradingSchedule: { start: '00:00', end: '23:59' },
-    },
+export const useAdminStore = create<AdminState>()(
+    persist(
+        (set) => ({
+            users: mockUsers,
+            transactions: mockTransactions,
+            auditLog: mockAudit,
+            broadcasts: [],
+            settings: defaultSettings,
 
-    // ---- Users ----
+            // ---- Users ----
     updateUserBalance: (id, newBalance) => set((s) => ({
         users: s.users.map(u => u.id === id ? { ...u, balance: newBalance } : u)
     })),
@@ -187,6 +194,12 @@ export const useAdminStore = create<AdminState>((set) => ({
             : [...s.settings.enabledNetworks, network];
         return { settings: { ...s.settings, enabledNetworks: nets } };
     }),
-}));
+        }),
+        {
+            name: 'zyphex-admin-storage',
+            partialize: (state) => ({ settings: state.settings }),
+        }
+    )
+);
 
 export { ALL_PAIRS, ALL_NETWORKS };

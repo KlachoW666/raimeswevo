@@ -12,7 +12,7 @@ export default function HomePage() {
                 <div className="w-16 h-16 rounded-full bg-[#00D26A]/10 flex items-center justify-center text-[#00D26A] mb-4">
                     <CheckCircle2 size={32} />
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2">{t('home.title') || 'Вы успешно авторизованы!'}</h2>
+                <h2 className="text-xl font-bold text-white mb-2">{t('home.title')}</h2>
                 <p className="text-[#8B949E] text-sm mb-6">Ожидайте сигналов или перейдите в кошелек для пополнения счета.</p>
             </div>
 

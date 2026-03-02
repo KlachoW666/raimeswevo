@@ -5,9 +5,17 @@ export const translations = {
         nav: {
             home: 'Главная',
             wallet: 'Кошелёк',
-            referrals: 'Рефераллы',
+            referrals: 'Рефералы',
             stats: 'Статистика',
             settings: 'Настройки'
+        },
+        auth: {
+            enterPin: 'Введите PIN',
+            enterPinDesc: 'Введите PIN для входа в приложение.',
+            pinPlaceholder: 'Пин-код',
+            login: 'Войти',
+            wrongPin: 'Неверный PIN-код',
+            networkError: 'Ошибка сети. Попробуйте еще раз.'
         },
         settings: {
             account: 'Аккаунт',
@@ -31,6 +39,7 @@ export const translations = {
             resetSuccess: 'Баланс успешно сброшен'
         },
         home: {
+            title: 'Вы успешно авторизованы!',
             balance: 'БАЛАНС',
             todayProfit: 'Прибыль за сегодня',
             winrate: 'Винрейт',
@@ -166,6 +175,14 @@ export const translations = {
             stats: 'Stats',
             settings: 'Settings'
         },
+        auth: {
+            enterPin: 'Enter PIN',
+            enterPinDesc: 'Enter PIN to sign in to the app.',
+            pinPlaceholder: 'PIN code',
+            login: 'Sign In',
+            wrongPin: 'Wrong PIN code',
+            networkError: 'Network error. Please try again.'
+        },
         settings: {
             account: 'Account',
             userId: 'USER ID',
@@ -188,6 +205,7 @@ export const translations = {
             resetSuccess: 'Balance successfully reset'
         },
         home: {
+            title: 'You are successfully authorized!',
             balance: 'BALANCE',
             todayProfit: 'Today\'s Profit',
             winrate: 'Winrate',
