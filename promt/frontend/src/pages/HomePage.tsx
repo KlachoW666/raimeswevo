@@ -1,10 +1,56 @@
+import { useEffect, useRef } from 'react';
 import { Zap, Clock, Activity } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
-import { useTradeStore } from '../store/tradeStore';
+import { useTradeStore, type Trade } from '../store/tradeStore';
+
+const LIVE_PAIRS = ['BONK', 'FIL', 'ETH', 'KAS', 'ROSE', 'SUI', 'VET', 'ALGO', 'LINK', 'APT', 'BNB', 'ATOM', 'AAVE', 'LTC', 'XRP', 'DOGE', 'SOL', 'ARB', 'OP'];
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+function formatTime() {
+    const d = new Date();
+    return d.toTimeString().slice(0, 8); // HH:MM:SS
+}
+
+function randomTrade(winratePercent: number): Trade {
+    const pair = LIVE_PAIRS[Math.floor(Math.random() * LIVE_PAIRS.length)];
+    const isProfit = Math.random() * 100 < winratePercent;
+    const pnlAbs = Math.random() * 2 + 0.01;
+    const pnlUsdAbs = Math.random() * 1.5 + 0.001;
+    const pnl = isProfit ? `+${pnlAbs.toFixed(4)}` : `-${pnlAbs.toFixed(4)}`;
+    const pnlUsd = isProfit ? `($${pnlUsdAbs.toFixed(4)})` : `($-${pnlUsdAbs.toFixed(4)})`;
+    return {
+        id: `live_${uid()}`,
+        time: formatTime(),
+        pair,
+        pnl,
+        pnlUsd,
+        type: isProfit ? 'profit' : 'loss',
+    };
+}
+
+const UPDATE_INTERVAL_MS = 800; // ~1.25 updates per second for live feel
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { trades, metrics } = useTradeStore();
+    const { trades, metrics, addTrade, incrementExecutions, updateMetrics, globalWinrate } = useTradeStore();
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        intervalRef.current = setInterval(() => {
+            const trade = randomTrade(globalWinrate);
+            addTrade(trade);
+            incrementExecutions();
+            const baseLatency = 780 + Math.floor(Math.random() * 60);
+            const baseAvg = baseLatency + Math.floor(Math.random() * 30);
+            updateMetrics({
+                latencyNs: baseLatency,
+                avgExecutionNs: baseAvg,
+            });
+        }, UPDATE_INTERVAL_MS);
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, [addTrade, incrementExecutions, updateMetrics, globalWinrate]);
 
     return (
         <div className="space-y-6 pb-4">
