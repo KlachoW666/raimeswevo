@@ -1,0 +1,8 @@
+﻿src/api/mockServices.ts(2,26): error TS1484: 'Network' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/api/mockServices.ts(3,25): error TS1484: 'Trade' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/api/mockServices.ts(49,63): error TS6133: 'address' is declared but its value is never read.
+src/components/features/DepositModal.tsx(3,10): error TS1484: 'Network' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/features/WithdrawModal.tsx(3,26): error TS1484: 'Network' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/hooks/useTelegram.ts(1,10): error TS1484: 'WebAppUser' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/hooks/useTelegram.ts(4,23): error TS2339: Property 'Telegram' does not exist on type 'Window & typeof globalThis'.
+src/pages/WalletPage.tsx(2,26): error TS1484: 'Network' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
