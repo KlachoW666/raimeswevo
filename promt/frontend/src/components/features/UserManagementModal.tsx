@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function UserManagementModal({ isOpen, onClose }: Props) {
-    const { users, setUsers, updateUserBalance, toggleBanUser, addBonusToUser, updateUserNotes, toggleVipStatus, resetUserBalance, addAuditEntry } = useAdminStore();
+    const { users, setUsers, addAuditEntry } = useAdminStore();
     const { userId: adminUserId } = useUserStore();
     const { hapticFeedback, showAlert } = useTelegram();
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,11 +35,6 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
         u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.id.includes(searchTerm)
     );
-
-    const refreshSelectedUser = (id: string) => {
-        const updated = useAdminStore.getState().users.find(u => u.id === id);
-        if (updated) setSelectedUser(updated);
-    };
 
     const refetchAndRefresh = async (id: string) => {
         if (!adminUserId) return;
@@ -206,7 +201,6 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                                 </div>
                             ))
                             )}
-                            ))}
                             {!loading && filteredUsers.length === 0 && (
                                 <div className="text-center text-[#8B949E] py-10 text-sm">Пользователи не найдены</div>
                             )}
