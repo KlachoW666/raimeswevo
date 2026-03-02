@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Search, Ban, DollarSign, UserCheck, ShieldAlert, CheckCircle2, Star, MessageSquare, RotateCcw, Gift } from 'lucide-react';
 import { useAdminStore } from '../../store/adminStore';
 import type { MockAppUser } from '../../store/adminStore';
+import { useUserStore } from '../../store/userStore';
 import { useTelegram } from '../../hooks/useTelegram';
+import { fetchUsers as fetchUsersApi, updateUser as updateUserApi, addBonus, resetBalance } from '../../api/adminApi';
 
 interface Props {
     isOpen: boolean;
@@ -10,10 +12,22 @@ interface Props {
 }
 
 export default function UserManagementModal({ isOpen, onClose }: Props) {
-    const { users, updateUserBalance, toggleBanUser, addBonusToUser, updateUserNotes, toggleVipStatus, resetUserBalance, addAuditEntry } = useAdminStore();
+    const { users, setUsers, updateUserBalance, toggleBanUser, addBonusToUser, updateUserNotes, toggleVipStatus, resetUserBalance, addAuditEntry } = useAdminStore();
+    const { userId: adminUserId } = useUserStore();
     const { hapticFeedback, showAlert } = useTelegram();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser, setSelectedUser] = useState<MockAppUser | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && adminUserId) {
+            setLoading(true);
+            fetchUsersApi(adminUserId)
+                .then(setUsers)
+                .catch(() => setUsers([]))
+                .finally(() => setLoading(false));
+        }
+    }, [isOpen, adminUserId, setUsers]);
 
     if (!isOpen) return null;
 
@@ -27,72 +41,104 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
         if (updated) setSelectedUser(updated);
     };
 
-    const handleUpdateBalance = () => {
-        if (!selectedUser) return;
+    const refetchAndRefresh = async (id: string) => {
+        if (!adminUserId) return;
+        const list = await fetchUsersApi(adminUserId);
+        setUsers(list);
+        const u = list.find(x => x.id === id);
+        if (u) setSelectedUser(u);
+    };
+
+    const handleUpdateBalance = async () => {
+        if (!selectedUser || !adminUserId) return;
         hapticFeedback?.impactOccurred('medium');
         const input = window.prompt(`Новый баланс для ${selectedUser.name}:`, selectedUser.balance.toString());
         if (input !== null) {
             const val = parseFloat(input);
             if (!isNaN(val) && val >= 0) {
-                updateUserBalance(selectedUser.id, val);
-                addAuditEntry({ adminId: 'admin', action: 'Изменение баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $${val}` });
-                refreshSelectedUser(selectedUser.id);
-                if (showAlert) showAlert(`Баланс обновлен до $${val.toFixed(2)}`);
+                try {
+                    await updateUserApi(selectedUser.id, adminUserId, { balance: val });
+                    addAuditEntry({ adminId: adminUserId, action: 'Изменение баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $${val}` });
+                    await refetchAndRefresh(selectedUser.id);
+                    if (showAlert) showAlert(`Баланс обновлен до $${val.toFixed(2)}`);
+                } catch {
+                    if (showAlert) showAlert('Ошибка сети');
+                }
             }
         }
     };
 
-    const handleAddBonus = () => {
-        if (!selectedUser) return;
+    const handleAddBonus = async () => {
+        if (!selectedUser || !adminUserId) return;
         hapticFeedback?.impactOccurred('medium');
         const input = window.prompt(`Бонус для ${selectedUser.name}:`, '100');
         if (input !== null) {
             const val = parseFloat(input);
             if (!isNaN(val) && val > 0) {
-                addBonusToUser(selectedUser.id, val);
-                addAuditEntry({ adminId: 'admin', action: 'Бонус', details: `${selectedUser.name}: +$${val}` });
-                refreshSelectedUser(selectedUser.id);
-                if (showAlert) showAlert(`Бонус +$${val.toFixed(2)} начислен`);
+                try {
+                    await addBonus(selectedUser.id, adminUserId, val);
+                    addAuditEntry({ adminId: adminUserId, action: 'Бонус', details: `${selectedUser.name}: +$${val}` });
+                    await refetchAndRefresh(selectedUser.id);
+                    if (showAlert) showAlert(`Бонус +$${val.toFixed(2)} начислен`);
+                } catch {
+                    if (showAlert) showAlert('Ошибка сети');
+                }
             }
         }
     };
 
-    const handleToggleBan = () => {
-        if (!selectedUser) return;
+    const handleToggleBan = async () => {
+        if (!selectedUser || !adminUserId) return;
         hapticFeedback?.impactOccurred('heavy');
-        toggleBanUser(selectedUser.id);
-        const action = selectedUser.isBanned ? 'Разбан' : 'Бан';
-        addAuditEntry({ adminId: 'admin', action: `${action} пользователя`, details: `${selectedUser.name} (${selectedUser.id})` });
-        refreshSelectedUser(selectedUser.id);
-        if (showAlert) showAlert(`${selectedUser.name} ${selectedUser.isBanned ? 'разбанен' : 'забанен'}`);
-    };
-
-    const handleToggleVip = () => {
-        if (!selectedUser) return;
-        hapticFeedback?.impactOccurred('medium');
-        toggleVipStatus(selectedUser.id);
-        addAuditEntry({ adminId: 'admin', action: 'VIP статус', details: `${selectedUser.name}: ${selectedUser.vipStatus ? 'снят' : 'установлен'}` });
-        refreshSelectedUser(selectedUser.id);
-    };
-
-    const handleUpdateNotes = () => {
-        if (!selectedUser) return;
-        const input = window.prompt('Заметка:', selectedUser.notes);
-        if (input !== null) {
-            updateUserNotes(selectedUser.id, input);
-            addAuditEntry({ adminId: 'admin', action: 'Заметка', details: `${selectedUser.name}: "${input.slice(0, 50)}"` });
-            refreshSelectedUser(selectedUser.id);
+        try {
+            await updateUserApi(selectedUser.id, adminUserId, { isBanned: !selectedUser.isBanned });
+            const action = selectedUser.isBanned ? 'Разбан' : 'Бан';
+            addAuditEntry({ adminId: adminUserId, action: `${action} пользователя`, details: `${selectedUser.name} (${selectedUser.id})` });
+            await refetchAndRefresh(selectedUser.id);
+            if (showAlert) showAlert(`${selectedUser.name} ${selectedUser.isBanned ? 'разбанен' : 'забанен'}`);
+        } catch {
+            if (showAlert) showAlert('Ошибка сети');
         }
     };
 
-    const handleResetBalance = () => {
-        if (!selectedUser) return;
+    const handleToggleVip = async () => {
+        if (!selectedUser || !adminUserId) return;
+        hapticFeedback?.impactOccurred('medium');
+        try {
+            await updateUserApi(selectedUser.id, adminUserId, { vipStatus: !selectedUser.vipStatus });
+            addAuditEntry({ adminId: adminUserId, action: 'VIP статус', details: `${selectedUser.name}: ${selectedUser.vipStatus ? 'снят' : 'установлен'}` });
+            await refetchAndRefresh(selectedUser.id);
+        } catch {
+            if (showAlert) showAlert('Ошибка сети');
+        }
+    };
+
+    const handleUpdateNotes = async () => {
+        if (!selectedUser || !adminUserId) return;
+        const input = window.prompt('Заметка:', selectedUser.notes);
+        if (input !== null) {
+            try {
+                await updateUserApi(selectedUser.id, adminUserId, { notes: input });
+                addAuditEntry({ adminId: adminUserId, action: 'Заметка', details: `${selectedUser.name}: "${input.slice(0, 50)}"` });
+                await refetchAndRefresh(selectedUser.id);
+            } catch {
+                if (showAlert) showAlert('Ошибка сети');
+            }
+        }
+    };
+
+    const handleResetBalance = async () => {
+        if (!selectedUser || !adminUserId) return;
         if (window.confirm(`Сбросить баланс ${selectedUser.name} до $0?`)) {
             hapticFeedback?.notificationOccurred('warning');
-            resetUserBalance(selectedUser.id);
-            addAuditEntry({ adminId: 'admin', action: 'Сброс баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $0` });
-            refreshSelectedUser(selectedUser.id);
-            if (showAlert) showAlert('Баланс обнулен');
+            try {
+                await resetBalance(selectedUser.id, adminUserId);
+                addAuditEntry({ adminId: adminUserId, action: 'Сброс баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $0` });
+                await refetchAndRefresh(selectedUser.id);
+                if (showAlert) showAlert('Баланс обнулен');
+            } catch {
+                if (showAlert) showAlert('Ошибка сети');
+            }
         }
     };
 
@@ -136,7 +182,10 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
 
                         {/* User List */}
                         <div className="space-y-2">
-                            {filteredUsers.map(user => (
+                            {loading ? (
+                                <div className="text-center text-[#8B949E] py-10 text-sm">Загрузка...</div>
+                            ) : (
+                            filteredUsers.map(user => (
                                 <div
                                     key={user.id}
                                     onClick={() => setSelectedUser(user)}
@@ -155,8 +204,10 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                                         <div className="text-[10px] text-[#8B949E]">{user.lastActive}</div>
                                     </div>
                                 </div>
+                            ))
+                            )}
                             ))}
-                            {filteredUsers.length === 0 && (
+                            {!loading && filteredUsers.length === 0 && (
                                 <div className="text-center text-[#8B949E] py-10 text-sm">Пользователи не найдены</div>
                             )}
                         </div>

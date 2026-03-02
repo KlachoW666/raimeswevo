@@ -43,6 +43,13 @@ npm install
 echo "Building for production..."
 npm run build
 
+echo "[4b/6] Setting up Backend API..."
+cd "$APP_DIR/promt/backend"
+npm install
+pm2 delete zyphex-api 2>/dev/null || true
+pm2 start server.js --name zyphex-api
+pm2 save 2>/dev/null || true
+
 # 5. Configure Nginx with HTTPS for Mini App (by IP)
 echo "[5/6] Configuring Nginx..."
 SERVER_IP="${SERVER_IP:-188.127.230.83}"
@@ -80,6 +87,15 @@ server {
 
     root /var/www/miniapp/promt/frontend/dist;
     index index.html;
+
+    location /api {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
 
     location / {
         try_files \$uri \$uri/ /index.html;

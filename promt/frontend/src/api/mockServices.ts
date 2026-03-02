@@ -1,30 +1,36 @@
 import { useUserStore } from '../store/userStore';
 import { useWalletStore } from '../store/walletStore';
 import type { Network } from '../store/walletStore';
+import { api } from './client';
 
-// Delay helper to simulate network request
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const MockAPI = {
-    // --- AUTH ---
     async login(pin: string): Promise<boolean> {
-        await delay(800);
-        if (pin === '0000') return false; // Mock failed PIN
-
-        // If login implies setting existing data, we mock fetching wallet state
-        const wallet = useWalletStore.getState();
-        if (wallet.totalUsd === 0) {
-            wallet.setBalances(500, {
-                TON: 150,
-                BSC: 200,
-                TRC: 150,
-                SOL: 0,
-                BTC: 0,
-                ETH: 0
+        const tg = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+        const telegramId = tg?.id ? String(tg.id) : '6976131338';
+        const referredBy = useUserStore.getState().referredBy;
+        try {
+            const res = await api.post<{ success: boolean; user?: { id: string; balanceUsdt: number } }>('/api/auth/login', {
+                pin,
+                telegramId,
+                username: tg?.username || undefined,
+                firstName: tg?.first_name || undefined,
+                referredBy: referredBy || undefined,
             });
+            if (!res.success || !res.user) return false;
+            useUserStore.getState().setUserId(res.user.id);
+            useUserStore.getState().setAuth(true, pin);
+            const wallet = useWalletStore.getState();
+            if (wallet.totalUsd === 0 && res.user.balanceUsdt != null) {
+                const b = res.user.balanceUsdt;
+                wallet.setBalances(b, { TON: b / 3, BSC: b / 3, TRC: b / 3, SOL: 0, BTC: 0, ETH: 0 });
+            }
+            return true;
+        } catch (e: any) {
+            if (e?.message === 'wrong_pin') return false;
+            throw e;
         }
-        useUserStore.getState().setAuth(true, pin);
-        return true;
     },
 
     async logout(): Promise<void> {

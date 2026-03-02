@@ -14,18 +14,24 @@ if [ ! -d "$APP_DIR/.git" ]; then
     exit 1
 fi
 
-echo "[1/4] Pulling latest changes..."
+echo "[1/5] Pulling latest changes..."
 cd "$APP_DIR"
 git pull
 
-echo "[2/4] Installing dependencies..."
+echo "[2/5] Installing dependencies..."
 cd "$APP_DIR/promt/frontend"
 npm install
 
-echo "[3/4] Building for production..."
+echo "[3/5] Building for production..."
 npm run build
 
-echo "[4/4] Reloading Nginx..."
+echo "[4/5] Backend API..."
+cd "$APP_DIR/promt/backend"
+npm install
+pm2 restart zyphex-api 2>/dev/null || pm2 start server.js --name zyphex-api
+pm2 save 2>/dev/null || true
+
+echo "[5/5] Reloading Nginx..."
 nginx -t && systemctl reload nginx
 
 echo "======================================"

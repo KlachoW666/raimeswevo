@@ -1,6 +1,7 @@
 // Global configuration for the application
 
 export const CONFIG = {
+    API_BASE: (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '',
     // Array of Telegram User IDs that are granted administrative access.
     // Replace these with your actual Telegram User IDs.
     // Note: User IDs are usually numeric strings, but sometimes can be formatted as 'tg_12345678'.

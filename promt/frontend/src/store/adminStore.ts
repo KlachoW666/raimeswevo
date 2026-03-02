@@ -71,6 +71,7 @@ interface AdminState {
     settings: PlatformSettings;
 
     // User actions
+    setUsers: (users: MockAppUser[]) => void;
     updateUserBalance: (id: string, newBalance: number) => void;
     toggleBanUser: (id: string) => void;
     addBonusToUser: (id: string, bonus: number) => void;
@@ -141,7 +142,8 @@ export const useAdminStore = create<AdminState>()(
             settings: defaultSettings,
 
             // ---- Users ----
-    updateUserBalance: (id, newBalance) => set((s) => ({
+            setUsers: (users) => set({ users }),
+            updateUserBalance: (id, newBalance) => set((s) => ({
         users: s.users.map(u => u.id === id ? { ...u, balance: newBalance } : u)
     })),
     toggleBanUser: (id) => set((s) => ({
