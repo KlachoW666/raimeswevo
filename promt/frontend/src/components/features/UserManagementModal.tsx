@@ -161,7 +161,7 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 space-y-4 overscroll-contain">
                 {!selectedUser ? (
                     <>
                         {/* Search */}
