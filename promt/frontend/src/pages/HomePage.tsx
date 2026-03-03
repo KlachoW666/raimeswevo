@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Zap, Clock, Activity } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTradeStore, type Trade } from '../store/tradeStore';
+import { useWalletStore } from '../store/walletStore';
 
 const LIVE_PAIRS = ['BONK', 'FIL', 'ETH', 'KAS', 'ROSE', 'SUI', 'VET', 'ALGO', 'LINK', 'APT', 'BNB', 'ATOM', 'AAVE', 'LTC', 'XRP', 'DOGE', 'SOL', 'ARB', 'OP'];
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -11,11 +12,17 @@ function formatTime() {
     return d.toTimeString().slice(0, 8); // HH:MM:SS
 }
 
-function randomTrade(winratePercent: number): Trade {
+function randomTrade(winratePercent: number, userBalance: number): Trade & { pnlUsdValue: number } {
     const pair = LIVE_PAIRS[Math.floor(Math.random() * LIVE_PAIRS.length)];
     const isProfit = Math.random() * 100 < winratePercent;
     const pnlAbs = Math.random() * 2 + 0.01;
-    const pnlUsdAbs = Math.random() * 1.5 + 0.001;
+
+    // USD P&L scaled to user's balance: ~0.01-0.1% per trade
+    // With ~100 trades/day this yields ~5% daily
+    const scaleFactor = Math.max(userBalance, 100) * (0.0001 + Math.random() * 0.001);
+    const pnlUsdValue = isProfit ? scaleFactor : -scaleFactor * 0.6; // losses are smaller (winrate biased)
+    const pnlUsdAbs = Math.abs(pnlUsdValue);
+
     const pnl = isProfit ? `+${pnlAbs.toFixed(4)}` : `-${pnlAbs.toFixed(4)}`;
     const pnlUsd = isProfit ? `($${pnlUsdAbs.toFixed(4)})` : `($-${pnlUsdAbs.toFixed(4)})`;
     return {
@@ -25,32 +32,50 @@ function randomTrade(winratePercent: number): Trade {
         pnl,
         pnlUsd,
         type: isProfit ? 'profit' : 'loss',
+        pnlUsdValue,
     };
 }
 
-const UPDATE_INTERVAL_MS = 800; // ~1.25 updates per second for live feel
-
 export default function HomePage() {
     const { t } = useTranslation();
-    const { trades, metrics, addTrade, incrementExecutions, updateMetrics, globalWinrate } = useTradeStore();
+    const { trades, metrics, addTrade, incrementExecutions, updateMetrics, globalWinrate, tradeDelayMs } = useTradeStore();
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
         intervalRef.current = setInterval(() => {
-            const trade = randomTrade(globalWinrate);
-            addTrade(trade);
-            incrementExecutions();
+            const totalUsd = useWalletStore.getState().totalUsd;
+            if (totalUsd <= 0) {
+                // No balance — still show trades but don't affect wallet
+                const trade = randomTrade(globalWinrate, 0);
+                addTrade(trade, true, 0);
+                incrementExecutions();
+            } else {
+                const trade = randomTrade(globalWinrate, totalUsd);
+                addTrade(trade, true, trade.pnlUsdValue);
+                incrementExecutions();
+
+                // Update wallet balance
+                const wallet = useWalletStore.getState();
+                const newTotal = Math.max(0, wallet.totalUsd + trade.pnlUsdValue);
+                // Distribute change across networks proportionally
+                const ratio = wallet.totalUsd > 0 ? newTotal / wallet.totalUsd : 1;
+                const newBalances = { ...wallet.balances };
+                for (const net of Object.keys(newBalances) as Array<keyof typeof newBalances>) {
+                    newBalances[net] = Math.max(0, newBalances[net] * ratio);
+                }
+                wallet.setBalances(newTotal, newBalances);
+            }
             const baseLatency = 780 + Math.floor(Math.random() * 60);
             const baseAvg = baseLatency + Math.floor(Math.random() * 30);
             updateMetrics({
                 latencyNs: baseLatency,
                 avgExecutionNs: baseAvg,
             });
-        }, UPDATE_INTERVAL_MS);
+        }, tradeDelayMs || 800);
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [addTrade, incrementExecutions, updateMetrics, globalWinrate]);
+    }, [addTrade, incrementExecutions, updateMetrics, globalWinrate, tradeDelayMs]);
 
     return (
         <div className="space-y-6 pb-4">
@@ -78,8 +103,8 @@ export default function HomePage() {
                                 <div
                                     key={trade.id}
                                     className={`grid grid-cols-[1fr_1fr_2fr] gap-2 px-4 py-2.5 border-b border-[#30363D]/50 last:border-0 text-sm border-l-2 transition-colors ${trade.type === 'profit'
-                                            ? 'bg-[#00D26A]/[0.06] border-l-[#00D26A]'
-                                            : 'bg-[#FF4444]/[0.06] border-l-[#FF4444]'
+                                        ? 'bg-[#00D26A]/[0.06] border-l-[#00D26A]'
+                                        : 'bg-[#FF4444]/[0.06] border-l-[#FF4444]'
                                         }`}
                                 >
                                     <span className={`font-mono text-xs ${trade.type === 'profit' ? 'text-[#00D26A]/70' : 'text-[#FF4444]/70'}`}>{trade.time}</span>
