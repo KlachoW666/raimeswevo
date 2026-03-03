@@ -115,17 +115,30 @@ export const MockAPI = {
         }
     },
 
-    async getDepositAddress(network: Network): Promise<string> {
-        await delay(500);
-        const mockAddresses: Record<Network, string> = {
-            TON: 'UQBp1K9mKVQf8...yZ-vM1R_',
-            BSC: '0x71C...976F',
-            TRC: 'TWM...kP8a',
-            SOL: '6Jv...9wR1',
-            BTC: 'bc1...m9Pq',
-            ETH: '0x88f...1a4A',
-        };
-        return mockAddresses[network];
+    async getDepositAddress(network: Network): Promise<{ address: string; memo: string }> {
+        const userId = useUserStore.getState().userId;
+        if (!userId) return { address: '', memo: '' };
+        try {
+            const res = await api.get<{ address: string; memo: string }>(
+                `/api/wallet/deposit-address?userId=${encodeURIComponent(userId)}&network=${encodeURIComponent(network)}`
+            );
+            return { address: res.address, memo: res.memo };
+        } catch {
+            return { address: '', memo: '' };
+        }
+    },
+
+    async checkDepositStatus(network: Network): Promise<string> {
+        const userId = useUserStore.getState().userId;
+        if (!userId) return 'none';
+        try {
+            const res = await api.get<{ status: string }>(
+                `/api/wallet/deposit-status?userId=${encodeURIComponent(userId)}&network=${encodeURIComponent(network)}`
+            );
+            return res.status;
+        } catch {
+            return 'none';
+        }
     },
 
     async requestWithdrawal(network: Network, amount: number, _address: string): Promise<{ success: boolean; error?: string }> {

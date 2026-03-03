@@ -76,6 +76,26 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     confirmed_at TEXT
   );
+  
+  CREATE TABLE IF NOT EXISTS pending_deposits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    network TEXT NOT NULL,
+    memo_code TEXT NOT NULL,
+    amount_expected REAL DEFAULT 0,
+    status TEXT DEFAULT 'pending',
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, network, memo_code)
+  );
+
+  CREATE TABLE IF NOT EXISTS processed_txs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tx_hash TEXT UNIQUE NOT NULL,
+    network TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    amount REAL NOT NULL,
+    processed_at TEXT DEFAULT (datetime('now'))
+  );
 `);
 
 db.exec(`
@@ -134,14 +154,34 @@ function refCodeFromTelegramId(telegramId) {
 function generateDepositAddress(userId, network) {
   const seed = crypto.createHash('md5').update(`${userId}:${network}`).digest('hex');
   switch (network) {
-    case 'TON': return `UQ${seed.slice(0, 46)}`;
-    case 'BSC': return `0x${seed.slice(0, 40)}`;
-    case 'TRC': return `T${seed.slice(0, 33)}`;
-    case 'SOL': return seed.slice(0, 44);
-    case 'BTC': return `bc1q${seed.slice(0, 38)}`;
-    case 'ETH': return `0x${seed.slice(0, 40)}`;
+    case 'TON': return process.env.ADMIN_WALLET_TON || `UQ${seed.slice(0, 46)}`;
+    case 'BSC': return process.env.ADMIN_WALLET_BSC || `0x${seed.slice(0, 40)}`;
+    case 'TRC': return process.env.ADMIN_WALLET_TRC || `T${seed.slice(0, 33)}`;
+    case 'SOL': return process.env.ADMIN_WALLET_SOL || seed.slice(0, 44);
+    case 'BTC': return process.env.ADMIN_WALLET_BTC || `bc1q${seed.slice(0, 38)}`;
+    case 'ETH': return process.env.ADMIN_WALLET_ETH || `0x${seed.slice(0, 40)}`;
     default: return `0x${seed.slice(0, 40)}`;
   }
+}
+
+/** Generate unique memo string to identify deposits from this user. */
+export function getDepositMemo(userId, network) {
+  const shortId = userId.replace('tg_', '').slice(0, 4);
+  const hash = crypto.createHash('md5').update(`${userId}:${network}`).digest('hex').toUpperCase().slice(0, 6);
+  return `DEP-${shortId}-${hash}`;
+}
+
+export function createPendingDeposit(userId, network) {
+  const memo = getDepositMemo(userId, network);
+  db.prepare('INSERT OR IGNORE INTO pending_deposits (user_id, network, memo_code) VALUES (?, ?, ?)')
+    .run(userId, network, memo);
+  return memo;
+}
+
+export function getPendingDepositStatus(userId, network) {
+  const row = db.prepare('SELECT status FROM pending_deposits WHERE user_id = ? AND network = ? ORDER BY id DESC LIMIT 1')
+    .get(userId, network);
+  return row ? row.status : null;
 }
 
 // ══════════════════════════════════════

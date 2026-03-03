@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { mkdirSync, existsSync } from 'fs';
@@ -24,7 +25,10 @@ import {
   getUserSettings,
   updateBotMode,
   changePin,
+  createPendingDeposit,
+  getPendingDepositStatus,
 } from './db.js';
+import { startMonitoring } from './depositMonitor.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, 'data');
@@ -168,15 +172,29 @@ app.get('/api/wallet/deposit-address', (req, res) => {
     const { userId, network } = req.query;
     if (!userId || !network) return res.status(400).json({ error: 'userId and network required' });
     const address = getDepositAddress(userId, network);
+    const memo = createPendingDeposit(userId, network);
     const networkNames = {
       TON: 'THE OPEN NETWORK', BSC: 'BNB SMART CHAIN', TRC: 'TRON',
       SOL: 'SOLANA', BTC: 'BITCOIN', ETH: 'ETHEREUM',
     };
     res.json({
       address,
+      memo,
       network,
       networkFullName: networkNames[network] || network,
     });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.get('/api/wallet/deposit-status', (req, res) => {
+  try {
+    const { userId, network } = req.query;
+    if (!userId || !network) return res.status(400).json({ error: 'userId and network required' });
+    const status = getPendingDepositStatus(userId, network);
+    res.json({ status: status || 'none' });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server_error' });
@@ -439,4 +457,7 @@ app.post('/api/users/:id/reset-balance', (req, res) => {
 // ══════════════════════════════════════
 
 const PORT = Number(process.env.PORT) || 3000;
-app.listen(PORT, () => console.log(`Zyphex API listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Zyphex API listening on port ${PORT}`);
+  startMonitoring();
+});
