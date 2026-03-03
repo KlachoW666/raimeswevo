@@ -81,7 +81,7 @@ export const MockAPI = {
     },
 
     // --- WALLET ---
-    /** Fetch balance from backend — only overwrite if server has MORE (e.g. admin deposited). Always sync referralCount for daily % bonus. */
+    /** Fetch balance from backend — server is source of truth so admin changes (bonus, set balance, reset) are always visible. */
     async fetchBalance(): Promise<void> {
         const userId = useUserStore.getState().userId;
         if (!userId) return;
@@ -95,9 +95,7 @@ export const MockAPI = {
             }>(`/api/wallet/balance?userId=${encodeURIComponent(userId)}`);
             const wallet = useWalletStore.getState();
             wallet.setReferralCount(res.referralCount ?? 0);
-            if (res.totalUsd > wallet.totalUsd) {
-                wallet.setBalances(res.totalUsd, res.balanceByNetwork);
-            }
+            wallet.setBalances(res.totalUsd, res.balanceByNetwork ?? {});
         } catch {
             // Silently fail — local store keeps previous values
         }
