@@ -192,7 +192,7 @@ export function findUserByTelegramId(telegramId) {
 }
 
 export function updateLastActive(id) {
-  db.prepare('UPDATE users SET last_active = datetime("now") WHERE id = ?').run(id);
+  db.prepare(`UPDATE users SET last_active = datetime('now') WHERE id = ?`).run(id);
 }
 
 // ══════════════════════════════════════
@@ -297,7 +297,7 @@ export function updateUser(id, patch) {
   }
   if (updates.length === 0) return getUserById(id); // nothing to update but user exists
   values.push(id);
-  db.prepare(`UPDATE users SET ${updates.join(', ')}, last_active = datetime("now") WHERE id = ?`).run(...values);
+  db.prepare(`UPDATE users SET ${updates.join(', ')}, last_active = datetime('now') WHERE id = ?`).run(...values);
   return getUserById(id);
 }
 
@@ -326,12 +326,12 @@ export function addBonusToUser(id, amount) {
   const u = db.prepare('SELECT balance_usdt FROM users WHERE id = ?').get(id);
   if (!u) return null;
   const newBalance = (u.balance_usdt ?? 0) + amount;
-  db.prepare('UPDATE users SET balance_usdt = ?, last_active = datetime("now") WHERE id = ?').run(newBalance, id);
+  db.prepare(`UPDATE users SET balance_usdt = ?, last_active = datetime('now') WHERE id = ?`).run(newBalance, id);
   return getUserById(id);
 }
 
 export function resetUserBalance(id) {
-  db.prepare('UPDATE users SET balance_usdt = 0, last_active = datetime("now") WHERE id = ?').run(id);
+  db.prepare(`UPDATE users SET balance_usdt = 0, last_active = datetime('now') WHERE id = ?`).run(id);
   return getUserById(id);
 }
 
