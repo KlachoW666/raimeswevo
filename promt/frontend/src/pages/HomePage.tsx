@@ -35,7 +35,7 @@ export default function HomePage() {
     const countdown = useListingCountdown();
     const [zyphexRate, setZyphexRate] = useState<number | null>(null);
     useEffect(() => {
-        MockAPI.getZyphexRate().then((r) => setZyphexRate(r)).catch(() => setZyphexRate(null));
+        MockAPI.getZyphexRate().then((r) => setZyphexRate(typeof r === 'object' && r && 'rate' in r ? r.rate : null)).catch(() => setZyphexRate(null));
     }, []);
 
     return (

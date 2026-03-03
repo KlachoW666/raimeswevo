@@ -77,8 +77,8 @@ export default function AuthPage({ onLogin }: { onLogin: () => void }) {
 
     if (checking) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[100dvh] text-white px-6 font-sans aurora-bg" style={{ background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)' }}>
-                <div className="relative z-10 flex flex-col items-center">
+            <div className="min-h-[100dvh] overflow-y-auto overscroll-contain text-white px-6 font-sans aurora-bg" style={{ background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)' }}>
+                <div className="flex flex-col items-center justify-center min-h-[100dvh] relative z-10">
                     <Loader2 className="w-10 h-10 text-[#00E676] animate-spin" />
                     <p className="mt-4 text-[#64748B] text-sm">Загрузка...</p>
                 </div>
@@ -87,7 +87,7 @@ export default function AuthPage({ onLogin }: { onLogin: () => void }) {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[100dvh] text-white px-6 font-sans aurora-bg relative" style={{ background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)' }}>
+        <div className="min-h-[100dvh] overflow-y-auto overscroll-contain text-white px-6 font-sans aurora-bg relative" style={{ background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)' }}>
             {/* Floating particles */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                 {[...Array(6)].map((_, i) => (
@@ -106,7 +106,7 @@ export default function AuthPage({ onLogin }: { onLogin: () => void }) {
                 ))}
             </div>
 
-            <div className="relative z-10 flex flex-col items-center w-full max-w-[320px] animate-slide-up">
+            <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] w-full max-w-[320px] animate-slide-up py-8">
                 {/* Logo with glow rings */}
                 <div className="relative mb-8">
                     <div className={`w-20 h-20 rounded-full flex items-center justify-center overflow-hidden transition-colors duration-500 ${error ? 'bg-[#FF5252]/15' : 'bg-[#00E676]/10'}`}>

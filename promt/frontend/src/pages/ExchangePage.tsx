@@ -12,10 +12,13 @@ type ZyphexBalance = {
     history: { amountUsdt: number; amountZyphex: number; rateUsed: number; createdAt: string }[];
 } | null;
 
+type PoolInfo = { remaining: number; totalSupply: number; sold: number } | null;
+
 export default function ExchangePage() {
     const { totalUsd, setBalances, balances } = useWalletStore();
     const { t } = useTranslation();
     const [rate, setRate] = useState<number>(100);
+    const [pool, setPool] = useState<PoolInfo>(null);
     const [zyphexData, setZyphexData] = useState<ZyphexBalance>(null);
     const [amountUsdt, setAmountUsdt] = useState('');
     const [loading, setLoading] = useState(false);
@@ -23,14 +26,21 @@ export default function ExchangePage() {
     const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
-        MockAPI.getZyphexRate().then(setRate).catch(() => setRate(100));
+        MockAPI.getZyphexRate().then((data) => {
+            setRate(data.rate ?? 100);
+            if (data.remaining != null && data.totalSupply != null) {
+                setPool({ remaining: data.remaining, totalSupply: data.totalSupply, sold: data.sold ?? 0 });
+            } else {
+                setPool(null);
+            }
+        }).catch(() => setRate(100));
         MockAPI.getZyphexBalance().then(setZyphexData).catch(() => setZyphexData(null));
     }, []);
 
     const amount = parseFloat(amountUsdt) || 0;
     const amountZyphexPreview = amount > 0 ? Math.round(amount * rate * 1000) / 1000 : 0;
     const pricePerCoinUsd = rate > 0 ? 1 / rate : 0;
-    const canExchange = amount >= 1 && amount <= totalUsd && !loading;
+    const canExchange = amount >= 1 && amount <= totalUsd && !loading && rate > 0;
 
     const handleExchange = async () => {
         if (!canExchange) return;
@@ -50,12 +60,19 @@ export default function ExchangePage() {
             setBalances(result.newBalanceUsdt, newBalances);
             setAmountUsdt('');
             setSuccessMsg(t('exchange.success'));
-            const updated = await MockAPI.getZyphexBalance();
+            const [updated, rateData] = await Promise.all([MockAPI.getZyphexBalance(), MockAPI.getZyphexRate()]);
             setZyphexData(updated);
+            setRate(rateData.rate ?? 100);
+            if (rateData.remaining != null && rateData.totalSupply != null) {
+                setPool({ remaining: rateData.remaining, totalSupply: rateData.totalSupply, sold: rateData.sold ?? 0 });
+            }
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : '';
             if (msg === 'insufficient_balance') setError(t('exchange.errorInsufficient'));
+            else if (msg === 'supply_exhausted') setError(t('exchange.errorSupplyExhausted'));
             else if (msg === 'invalid_amount') setError(t('exchange.errorMin'));
+            else if (msg === 'server_error') setError(t('exchange.errorServer'));
+            else if (msg === 'user_not_found' || msg === 'not_authenticated') setError(t('exchange.errorSession'));
             else setError(t('exchange.errorNetwork'));
         } finally {
             setLoading(false);
@@ -74,9 +91,22 @@ export default function ExchangePage() {
                     <div className="text-xs text-[#8B949E] mb-2">
                         {t('exchange.rateLabel')}: {t('exchange.rateDesc')} <span className="font-bold text-[#00E676]">{rate}</span> ZYPHEX
                     </div>
-                    <div className="text-xs text-[#8B949E] mb-4">
+                    <div className="text-xs text-[#8B949E] mb-2">
                         {t('exchange.pricePerCoin')}: <span className="font-bold text-[#00E676]">${pricePerCoinUsd >= 0.0001 ? pricePerCoinUsd.toFixed(pricePerCoinUsd < 1 ? 4 : 2) : pricePerCoinUsd.toFixed(6)}</span>
                     </div>
+                    {pool != null && (
+                        <div className="mb-4">
+                            <div className="text-xs text-[#8B949E] mb-1.5">
+                                {t('exchange.poolRemainingFormat').replace('X', pool.remaining.toLocaleString()).replace('Y', pool.totalSupply.toLocaleString())}
+                            </div>
+                            <div className="h-2 bg-[#161B22] rounded-full overflow-hidden border border-[#30363D]">
+                                <div
+                                    className="h-full bg-[#00E676]/60 rounded-full transition-all duration-300"
+                                    style={{ width: `${(pool.remaining / pool.totalSupply) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
                     <div className="flex items-center gap-2 text-[#64748B] text-xs mb-2">
                         <Wallet size={14} />
                         {t('exchange.availableUsdt')}: <span className="font-bold text-white">{formatCurrency(totalUsd)}</span>
@@ -123,7 +153,7 @@ export default function ExchangePage() {
                 </div>
                 <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider mb-2">{t('exchange.history')}</h4>
                 {zyphexData?.history && zyphexData.history.length > 0 ? (
-                    <ul className="space-y-2 max-h-40 overflow-y-auto">
+                    <ul className="space-y-2 max-h-40 overflow-y-auto thin-scrollbar">
                         {zyphexData.history.map((h, i) => (
                             <li key={i} className="flex justify-between text-xs bg-[#0D1117] rounded-lg px-3 py-2">
                                 <span className="text-[#8B949E]">{h.createdAt.slice(0, 16).replace('T', ' ')}</span>

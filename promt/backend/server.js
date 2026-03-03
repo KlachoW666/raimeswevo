@@ -32,6 +32,9 @@ import {
   exchangeUsdtToZyphex,
   getUserZyphexBalance,
   getZyphexExportList,
+  getZyphexRemaining,
+  getTotalZyphexSold,
+  ZYPHEX_TOTAL_SUPPLY,
 } from './db.js';
 import { startMonitoring } from './depositMonitor.js';
 
@@ -321,7 +324,9 @@ app.get('/api/referral/info', (req, res) => {
 app.get('/api/zyphex/rate', (req, res) => {
   try {
     const rate = getZyphexRate();
-    res.json({ rate });
+    const remaining = getZyphexRemaining();
+    const sold = getTotalZyphexSold();
+    res.json({ rate, remaining, totalSupply: ZYPHEX_TOTAL_SUPPLY, sold });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server_error' });
@@ -347,7 +352,7 @@ app.post('/api/zyphex/exchange', (req, res) => {
     if (!userId || amountUsdt == null) return res.status(400).json({ error: 'userId and amountUsdt required' });
     const result = exchangeUsdtToZyphex(userId, amountUsdt);
     if (result.error) {
-      const status = result.error === 'insufficient_balance' ? 400 : result.error === 'user_not_found' ? 404 : 400;
+      const status = result.error === 'insufficient_balance' || result.error === 'supply_exhausted' ? 400 : result.error === 'user_not_found' ? 404 : 400;
       return res.status(status).json({ error: result.error });
     }
     res.json(result);

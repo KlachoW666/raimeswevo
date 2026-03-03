@@ -86,13 +86,17 @@ export const translations = {
             dailyProfitDesc: 'Базовые 3% в день. За каждого приглашённого +0,02% к доходу.',
             withdrawLimits: 'Лимиты вывода',
             txHistory: 'История операций',
-            noTx: 'Пока нет операций. Используйте «Пополнить» или «Вывести» в шапке.'
+            noTx: 'Пока нет операций. Используйте «Пополнить» или «Вывести» в шапке.',
+            listingPromptMessage: 'Скоро листинг! Лучше обменяй на монеты — получишь больше.',
+            listingPromptExchange: 'Обменять',
+            listingPromptWithdrawAnyway: 'Всё равно вывести'
         },
         exchange: {
             title: 'Обмен USDT → ZYPHEX',
             rateLabel: 'Курс',
             rateDesc: '1 USDT =',
             pricePerCoin: 'Цена 1 ZYPHEX',
+            poolRemainingFormat: 'В пуле: X из Y ZYPHEX',
             availableUsdt: 'Доступно USDT',
             amountToExchange: 'Сумма к обмену (USDT)',
             youGet: 'Получите',
@@ -103,7 +107,10 @@ export const translations = {
             success: 'Обмен выполнен',
             errorInsufficient: 'Недостаточно USDT',
             errorMin: 'Минимум 1 USDT',
-            errorNetwork: 'Ошибка сети'
+            errorNetwork: 'Ошибка сети',
+            errorSupplyExhausted: 'Пул ZYPHEX исчерпан',
+            errorServer: 'Ошибка сервера. Попробуйте позже.',
+            errorSession: 'Сессия устарела. Войдите снова.'
         },
         referral: {
             title: 'Ваша реферальная ссылка',
@@ -285,13 +292,17 @@ export const translations = {
             dailyProfitDesc: 'Base 3% per day. +0.02% for each referred user.',
             withdrawLimits: 'Withdrawal Limits',
             txHistory: 'Transaction History',
-            noTx: 'No operations yet. Use "Deposit" or "Withdraw" above.'
+            noTx: 'No operations yet. Use "Deposit" or "Withdraw" above.',
+            listingPromptMessage: 'Listing coming soon! Better exchange for coins — you\'ll get more.',
+            listingPromptExchange: 'Exchange',
+            listingPromptWithdrawAnyway: 'Withdraw anyway'
         },
         exchange: {
             title: 'Exchange USDT → ZYPHEX',
             rateLabel: 'Rate',
             rateDesc: '1 USDT =',
             pricePerCoin: 'Price per 1 ZYPHEX',
+            poolRemainingFormat: 'In pool: X of Y ZYPHEX',
             availableUsdt: 'Available USDT',
             amountToExchange: 'Amount to exchange (USDT)',
             youGet: 'You get',
@@ -302,7 +313,10 @@ export const translations = {
             success: 'Exchange completed',
             errorInsufficient: 'Insufficient USDT',
             errorMin: 'Minimum 1 USDT',
-            errorNetwork: 'Network error'
+            errorNetwork: 'Network error',
+            errorSupplyExhausted: 'ZYPHEX pool exhausted',
+            errorServer: 'Server error. Try again later.',
+            errorSession: 'Session expired. Please log in again.'
         },
         referral: {
             title: 'Your referral link',

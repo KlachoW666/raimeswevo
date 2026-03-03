@@ -60,7 +60,7 @@ export default function AdminZyphex() {
                     <Coins size={20} />
                     Курс ZYPHEX
                 </div>
-                <p className="text-xs text-[#8B949E] mb-2">ZYPHEX за 1 USDT (пользователи обменивают по этому курсу).</p>
+                <p className="text-xs text-[#8B949E] mb-2">Начальный курс (при полном пуле): ZYPHEX за 1 USDT. Фактический курс растёт по мере уменьшения остатка пула.</p>
                 <div className="flex gap-2 mb-2">
                     <input
                         type="number"
@@ -79,7 +79,7 @@ export default function AdminZyphex() {
                         Сохранить
                     </button>
                 </div>
-                <p className="text-[10px] text-[#8B949E]">Текущий курс: 1 USDT = <span className="text-[#00E676] font-bold">{savedRate}</span> ZYPHEX</p>
+                <p className="text-[10px] text-[#8B949E]">Начальный курс при полном пуле: 1 USDT = <span className="text-[#00E676] font-bold">{savedRate}</span> ZYPHEX</p>
             </div>
 
             <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-5">

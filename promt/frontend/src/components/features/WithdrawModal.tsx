@@ -93,7 +93,7 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Content */}
-            <div className="px-5 pb-8 overflow-y-auto no-scrollbar flex-1 flex flex-col space-y-6">
+            <div className="px-5 pb-8 overflow-y-auto no-scrollbar flex-1 min-h-0 flex flex-col space-y-6">
 
                 {/* Network Selector */}
                 <div>

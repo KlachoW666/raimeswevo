@@ -89,7 +89,7 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Content */}
-            <div className="px-5 pb-8 overflow-y-auto no-scrollbar flex-1 flex flex-col">
+            <div className="px-5 pb-8 overflow-y-auto no-scrollbar flex-1 min-h-0 flex flex-col">
 
                 <div className="mb-6 mt-2">
                     <div className="text-[11px] text-[#64748B] mb-3 font-bold uppercase tracking-wider">{t('deposit.selectNetwork')}</div>

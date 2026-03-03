@@ -1,8 +1,9 @@
-import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Info } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Info, Coins } from 'lucide-react';
 import { useWalletStore } from '../store/walletStore';
 import type { Network } from '../store/walletStore';
 import { formatCurrency } from '../utils/formatters';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DepositModal from '../components/features/DepositModal';
 import WithdrawModal from '../components/features/WithdrawModal';
 import { useTranslation } from '../hooks/useTranslation';
@@ -21,8 +22,10 @@ const NETWORK_COLORS: Record<Network, string> = {
 export default function WalletPage() {
     const { totalUsd, expectedDailyIncomeUsd, expectedDailyPercent, balances } = useWalletStore();
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const [activeModal, setActiveModal] = useState<'deposit' | 'withdraw' | null>(null);
+    const [showListingPrompt, setShowListingPrompt] = useState(false);
 
     // Sync balance from backend on every page visit
     useEffect(() => {
@@ -66,7 +69,7 @@ export default function WalletPage() {
                             </button>
 
                             <button
-                                onClick={() => setActiveModal('withdraw')}
+                                onClick={() => setShowListingPrompt(true)}
                                 className="flex items-center justify-center gap-2 glass-card text-[#F8FAFC] rounded-2xl py-3.5 text-sm font-semibold transition-all hover:bg-white/[0.08] active:scale-95"
                             >
                                 <ArrowUpRight size={16} />
@@ -132,6 +135,42 @@ export default function WalletPage() {
 
             {activeModal === 'deposit' && <DepositModal onClose={handleClose} />}
             {activeModal === 'withdraw' && <WithdrawModal onClose={handleClose} />}
+
+            {showListingPrompt && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowListingPrompt(false)}>
+                    <div className="glass-card-elevated rounded-2xl p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-xl border border-[#30363D]" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-2 text-[#00E676] font-bold mb-3">
+                            <Coins size={22} />
+                            {t('wallet.withdraw')}
+                        </div>
+                        <p className="text-[#E6EDF3] text-sm leading-relaxed mb-5">
+                            {t('wallet.listingPromptMessage')}
+                        </p>
+                        <div className="flex flex-col gap-2">
+                            <button
+                                onClick={() => { setShowListingPrompt(false); navigate('/exchange'); }}
+                                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#00E676] to-[#00C853] text-black rounded-xl py-3 text-sm font-bold"
+                            >
+                                <Coins size={16} />
+                                {t('wallet.listingPromptExchange')}
+                            </button>
+                            <button
+                                onClick={() => { setShowListingPrompt(false); setActiveModal('withdraw'); }}
+                                className="w-full flex items-center justify-center gap-2 glass-card text-[#F8FAFC] rounded-xl py-3 text-sm font-semibold hover:bg-white/[0.08]"
+                            >
+                                <ArrowUpRight size={16} />
+                                {t('wallet.listingPromptWithdrawAnyway')}
+                            </button>
+                            <button
+                                onClick={() => setShowListingPrompt(false)}
+                                className="w-full text-[#8B949E] text-sm py-2"
+                            >
+                                {t('withdraw.cancel')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

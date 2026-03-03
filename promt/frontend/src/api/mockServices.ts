@@ -118,9 +118,9 @@ export const MockAPI = {
     },
 
     // --- ZYPHEX ---
-    async getZyphexRate(): Promise<number> {
-        const res = await api.get<{ rate: number }>('/api/zyphex/rate');
-        return res.rate ?? 100;
+    async getZyphexRate(): Promise<{ rate: number; remaining?: number; totalSupply?: number; sold?: number }> {
+        const res = await api.get<{ rate: number; remaining?: number; totalSupply?: number; sold?: number }>('/api/zyphex/rate');
+        return { rate: res.rate ?? 100, remaining: res.remaining, totalSupply: res.totalSupply, sold: res.sold };
     },
     async getZyphexBalance(): Promise<{
         balanceZyphex: number;

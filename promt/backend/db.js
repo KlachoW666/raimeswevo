@@ -413,13 +413,28 @@ export function getReferralInfo(userId) {
 // ZYPHEX exchange
 // ══════════════════════════════════════
 
+export const ZYPHEX_TOTAL_SUPPLY = 1_000_000;
 const ZYPHEX_RATE_KEY = 'zyphex_rate_per_usdt';
 const MIN_EXCHANGE_USDT = 1;
 
+export function getTotalZyphexSold() {
+  const row = db.prepare('SELECT COALESCE(SUM(amount_zyphex), 0) AS total FROM zyphex_exchanges').get();
+  return Number(row?.total) || 0;
+}
+
+export function getZyphexRemaining() {
+  const sold = getTotalZyphexSold();
+  return Math.max(0, ZYPHEX_TOTAL_SUPPLY - sold);
+}
+
 export function getZyphexRate() {
   const row = db.prepare('SELECT value FROM app_settings WHERE key = ?').get(ZYPHEX_RATE_KEY);
-  const rate = row ? parseFloat(row.value) : 100;
-  return Number.isFinite(rate) ? rate : 100;
+  const initialRate = row ? parseFloat(row.value) : 100;
+  const baseRate = Number.isFinite(initialRate) ? initialRate : 100;
+  const remaining = getZyphexRemaining();
+  if (remaining <= 0) return 0;
+  const rate = baseRate * (remaining / ZYPHEX_TOTAL_SUPPLY);
+  return rate;
 }
 
 export function setZyphexRate(rate) {
@@ -438,14 +453,20 @@ export function exchangeUsdtToZyphex(userId, amountUsdt) {
   const balanceUsdt = user.balance_usdt ?? 0;
   if (balanceUsdt < amount) return { error: 'insufficient_balance' };
   const rate = getZyphexRate();
-  const amountZyphex = Math.round(amount * rate * 1000) / 1000;
-  const newBalanceUsdt = Math.round((balanceUsdt - amount) * 100) / 100;
-  const newBalanceZyphex = Math.round(((user.balance_zyphex ?? 0) + amountZyphex) * 1000) / 1000;
+  if (rate <= 0) return { error: 'supply_exhausted' };
+  const remaining = getZyphexRemaining();
+  const wantedZyphex = amount * rate;
+  const amountZyphex = Math.min(wantedZyphex, remaining);
+  const amountZyphexRounded = Math.round(amountZyphex * 1000) / 1000;
+  if (amountZyphexRounded <= 0) return { error: 'supply_exhausted' };
+  const amountUsdtToCharge = amountZyphexRounded / rate;
+  const newBalanceUsdt = Math.round((balanceUsdt - amountUsdtToCharge) * 100) / 100;
+  const newBalanceZyphex = Math.round(((user.balance_zyphex ?? 0) + amountZyphexRounded) * 1000) / 1000;
   db.prepare('UPDATE users SET balance_usdt = ?, balance_zyphex = ?, last_active = datetime("now") WHERE id = ?')
     .run(newBalanceUsdt, newBalanceZyphex, userId);
   db.prepare('INSERT INTO zyphex_exchanges (user_id, amount_usdt, amount_zyphex, rate_used) VALUES (?, ?, ?, ?)')
-    .run(userId, amount, amountZyphex, rate);
-  return { newBalanceUsdt, newBalanceZyphex, amountZyphex };
+    .run(userId, amountUsdtToCharge, amountZyphexRounded, rate);
+  return { newBalanceUsdt, newBalanceZyphex, amountZyphex: amountZyphexRounded };
 }
 
 export function getUserZyphexBalance(userId) {
