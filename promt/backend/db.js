@@ -492,7 +492,7 @@ export function exchangeUsdtToZyphex(userId, amountUsdt) {
     return { error: 'invalid_amount' };
   }
   const rateToSave = Number.isFinite(rate) ? rate : 0;
-  const updateUsers = db.prepare('UPDATE users SET balance_usdt = ?, balance_zyphex = ?, last_active = datetime('now') WHERE id = ?');
+  const updateUsers = db.prepare(`UPDATE users SET balance_usdt = ?, balance_zyphex = ?, last_active = datetime('now') WHERE id = ?`);
   const insertExchange = db.prepare('INSERT INTO zyphex_exchanges (user_id, amount_usdt, amount_zyphex, rate_used) VALUES (?, ?, ?, ?)');
   const runExchange = db.transaction(() => {
     updateUsers.run(newBalanceUsdt, newBalanceZyphex, userId);
