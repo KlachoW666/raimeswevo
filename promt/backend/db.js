@@ -348,13 +348,36 @@ export function getWalletBalances(userId) {
   const rows = db.prepare('SELECT network, balance_usdt, address FROM wallets WHERE user_id = ?').all(userId);
   const balances = { TON: 0, BSC: 0, TRC: 0, SOL: 0, BTC: 0, ETH: 0 };
   const addresses = {};
+  let walletTotal = 0;
   for (const r of rows) {
     balances[r.network] = r.balance_usdt ?? 0;
+    walletTotal += r.balance_usdt ?? 0;
     addresses[r.network] = r.address;
   }
   const user = db.prepare('SELECT balance_usdt FROM users WHERE id = ?').get(userId);
+  const totalUsd = user?.balance_usdt ?? 0;
+
+  // If user has balance but wallets are empty (e.g. admin-set balance),
+  // distribute evenly across networks so the wallet page shows real numbers
+  if (totalUsd > 0 && walletTotal === 0) {
+    const networks = Object.keys(balances);
+    const perNetwork = Math.round((totalUsd / networks.length) * 100) / 100;
+    for (const net of networks) {
+      balances[net] = perNetwork;
+    }
+    // Also update wallet rows in DB so it persists
+    const upsert = db.prepare(`
+      INSERT INTO wallets (user_id, network, address, balance_usdt)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(user_id, network) DO UPDATE SET balance_usdt = excluded.balance_usdt
+    `);
+    for (const net of networks) {
+      upsert.run(userId, net, addresses[net] || generateDepositAddress(userId, net), perNetwork);
+    }
+  }
+
   return {
-    totalUsd: user?.balance_usdt ?? 0,
+    totalUsd,
     balanceByNetwork: balances,
     addresses,
   };

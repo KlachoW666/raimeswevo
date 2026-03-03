@@ -80,6 +80,21 @@ export const MockAPI = {
     },
 
     // --- WALLET ---
+    async fetchBalance(): Promise<void> {
+        const userId = useUserStore.getState().userId;
+        if (!userId) return;
+        try {
+            const res = await api.get<{
+                totalUsd: number;
+                balanceByNetwork: Record<Network, number>;
+            }>(`/api/wallet/balance?userId=${encodeURIComponent(userId)}`);
+            const wallet = useWalletStore.getState();
+            wallet.setBalances(res.totalUsd, res.balanceByNetwork);
+        } catch {
+            // Silently fail — local store keeps previous values
+        }
+    },
+
     async getDepositAddress(network: Network): Promise<string> {
         await delay(500);
         const mockAddresses: Record<Network, string> = {

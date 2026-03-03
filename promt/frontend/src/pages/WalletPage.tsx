@@ -2,10 +2,11 @@ import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Info } from 'lucide-re
 import { useWalletStore } from '../store/walletStore';
 import type { Network } from '../store/walletStore';
 import { formatCurrency } from '../utils/formatters';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DepositModal from '../components/features/DepositModal';
 import WithdrawModal from '../components/features/WithdrawModal';
 import { useTranslation } from '../hooks/useTranslation';
+import { MockAPI } from '../api/mockServices';
 
 export default function WalletPage() {
     const { totalUsd, expectedDailyIncomeUsd, expectedDailyPercent, balances } = useWalletStore();
@@ -13,7 +14,16 @@ export default function WalletPage() {
 
     const [activeModal, setActiveModal] = useState<'deposit' | 'withdraw' | null>(null);
 
-    const handleClose = () => setActiveModal(null);
+    // Sync balance from backend on every page visit
+    useEffect(() => {
+        MockAPI.fetchBalance();
+    }, []);
+
+    const handleClose = () => {
+        setActiveModal(null);
+        // Re-sync after closing deposit/withdraw modal
+        MockAPI.fetchBalance();
+    };
 
     return (
         <>

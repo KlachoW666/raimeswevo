@@ -52,7 +52,11 @@ function App() {
     MockAPI.syncVisitor().catch(() => { });
     // Validate session against backend
     validateSession();
-  }, [validateSession]);
+    // Sync wallet balance from backend (for Header and Wallet page)
+    if (isAuthenticated) {
+      MockAPI.fetchBalance();
+    }
+  }, [validateSession, isAuthenticated]);
 
   return (
     <Router>
