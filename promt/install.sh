@@ -31,24 +31,34 @@ APP_DIR="/var/www/miniapp"
 REPO_URL="https://github.com/KlachoW666/afdsghjklsgdhy65.git"
 
 if [ -d "$APP_DIR" ]; then
+    echo "Removing old installation..."
     rm -rf "$APP_DIR"
 fi
 
 git clone "$REPO_URL" "$APP_DIR"
-cd "$APP_DIR/promt/frontend"
 
-# Build the frontend application
-echo "Installing NPM packages..."
+# --- Frontend ---
+echo "[4a/6] Building Frontend..."
+cd "$APP_DIR/promt/frontend"
 npm install
+
+# Delete stale DB if exists (PIN hashing changed)
+if [ -f "$APP_DIR/promt/backend/data/zyphex.db" ]; then
+    echo "Removing old database (PIN hashing changed)..."
+    rm -f "$APP_DIR/promt/backend/data/zyphex.db"
+fi
+
 echo "Building for production..."
 npm run build
 
+# --- Backend ---
 echo "[4b/6] Setting up Backend API..."
 cd "$APP_DIR/promt/backend"
 npm install
 pm2 delete zyphex-api 2>/dev/null || true
 pm2 start server.js --name zyphex-api
 pm2 save 2>/dev/null || true
+pm2 startup 2>/dev/null || true
 
 # 5. Configure Nginx with HTTPS for Mini App (by IP)
 echo "[5/6] Configuring Nginx..."
@@ -88,6 +98,7 @@ server {
     root /var/www/miniapp/promt/frontend/dist;
     index index.html;
 
+    # API — proxy to backend
     location /api {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -97,6 +108,17 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
+    # WebSocket support (for future WS endpoints)
+    location /ws {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+
+    # SPA fallback
     location / {
         try_files \$uri \$uri/ /index.html;
     }
@@ -117,7 +139,7 @@ echo ""
 echo "In Telegram BotFather set Main App URL to:"
 echo "  https://$SERVER_IP"
 echo ""
-echo "WARNING: Self-signed certificate. Telegram will show 'Your connection is not private' (ERR_CERT_AUTHORITY_INVALID) and the Mini App may not open."
+echo "WARNING: Self-signed certificate. Telegram will show 'Your connection is not private'."
 echo "FIX: Use a domain + Let's Encrypt: point A-record to this IP, then run:"
 echo "  sed -i 's/server_name _;/server_name app.your-domain.com;/' /etc/nginx/sites-available/miniapp"
 echo "  certbot --nginx -d app.your-domain.com"

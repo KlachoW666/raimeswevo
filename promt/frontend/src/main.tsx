@@ -8,7 +8,7 @@ import { useUserStore } from './store/userStore'
 const START_PARAM_REGEX = /^[\w-]{1,512}$/
 
 function initTelegramStartParam() {
-  const startParam = (window as any).Telegram?.WebApp?.initDataUnsafe?.start_param
+  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param
   if (typeof startParam === 'string' && START_PARAM_REGEX.test(startParam)) {
     useUserStore.getState().setReferredBy(startParam)
   }

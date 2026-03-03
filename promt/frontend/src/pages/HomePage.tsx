@@ -77,13 +77,16 @@ export default function HomePage() {
                             trades.map((trade) => (
                                 <div
                                     key={trade.id}
-                                    className="grid grid-cols-[1fr_1fr_2fr] gap-2 px-4 py-2.5 border-b border-[#30363D]/50 last:border-0 text-sm"
+                                    className={`grid grid-cols-[1fr_1fr_2fr] gap-2 px-4 py-2.5 border-b border-[#30363D]/50 last:border-0 text-sm border-l-2 transition-colors ${trade.type === 'profit'
+                                            ? 'bg-[#00D26A]/[0.06] border-l-[#00D26A]'
+                                            : 'bg-[#FF4444]/[0.06] border-l-[#FF4444]'
+                                        }`}
                                 >
-                                    <span className="text-white font-mono text-xs">{trade.time}</span>
-                                    <span className="text-white font-medium">{trade.pair}</span>
+                                    <span className={`font-mono text-xs ${trade.type === 'profit' ? 'text-[#00D26A]/70' : 'text-[#FF4444]/70'}`}>{trade.time}</span>
+                                    <span className={`font-semibold ${trade.type === 'profit' ? 'text-[#00D26A]' : 'text-[#FF4444]'}`}>{trade.pair}</span>
                                     <span className={trade.type === 'profit' ? 'text-[#00D26A]' : 'text-[#FF4444]'}>
-                                        <span className="font-mono">{trade.pnl} {trade.pair}</span>
-                                        <span className="text-[#8B949E] text-xs ml-1">{trade.pnlUsd}</span>
+                                        <span className="font-mono font-bold">{trade.pnl} {trade.pair}</span>
+                                        <span className={`text-xs ml-1 ${trade.type === 'profit' ? 'text-[#00D26A]/60' : 'text-[#FF4444]/60'}`}>{trade.pnlUsd}</span>
                                     </span>
                                 </div>
                             ))

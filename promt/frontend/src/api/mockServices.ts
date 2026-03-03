@@ -6,7 +6,7 @@ import { api } from './client';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 function getTelegramUser() {
-    const tg = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+    const tg = window.Telegram?.WebApp?.initDataUnsafe?.user;
     return {
         telegramId: tg?.id ? String(tg.id) : '6976131338',
         username: tg?.username as string | undefined,

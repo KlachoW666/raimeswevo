@@ -1,11 +1,9 @@
-import type { WebAppUser } from '@twa-dev/types';
-
 export function useTelegram() {
-    const tg = (window as any).Telegram?.WebApp;
+    const tg = window.Telegram?.WebApp;
 
     return {
         tg,
-        user: tg?.initDataUnsafe?.user as WebAppUser | undefined,
+        user: tg?.initDataUnsafe?.user,
         initData: tg?.initData,
         queryId: tg?.initDataUnsafe?.query_id,
         startParam: tg?.initDataUnsafe?.start_param,
@@ -14,12 +12,12 @@ export function useTelegram() {
         close: () => tg?.close(),
         ready: () => tg?.ready(),
         hapticFeedback: {
-            impactOccurred: (style: any) => {
+            impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
                 if (tg?.isVersionAtLeast?.('6.1') && tg?.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred(style);
                 }
             },
-            notificationOccurred: (type: any) => {
+            notificationOccurred: (type: 'error' | 'success' | 'warning') => {
                 if (tg?.isVersionAtLeast?.('6.1') && tg?.HapticFeedback) {
                     tg.HapticFeedback.notificationOccurred(type);
                 }

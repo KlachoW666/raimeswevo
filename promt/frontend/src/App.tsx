@@ -13,7 +13,7 @@ import AdminPage from './pages/AdminPage';
 import { useUserStore } from './store/userStore';
 import { MockAPI } from './api/mockServices';
 
-const isInsideTelegram = () => typeof window !== 'undefined' && !!(window as any).Telegram?.WebApp;
+const isInsideTelegram = () => typeof window !== 'undefined' && !!window.Telegram?.WebApp;
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex flex-col h-[100dvh] overflow-hidden bg-bg-main text-text-main">
@@ -34,7 +34,7 @@ function App() {
   const { isAuthenticated } = useUserStore();
 
   useEffect(() => {
-    MockAPI.syncVisitor().catch(() => {});
+    MockAPI.syncVisitor().catch(() => { });
   }, []);
 
   return (

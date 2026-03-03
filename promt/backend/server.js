@@ -8,7 +8,6 @@ import {
   registerUser,
   findUserByTelegramId,
   updateLastActive,
-  listUsers,
   listAllPeople,
   updateUser,
   getUserById,
@@ -16,6 +15,15 @@ import {
   resetUserBalance,
   getReferralInfo,
   upsertVisitor,
+  verifyPin,
+  getWalletBalances,
+  getDepositAddress,
+  getWithdrawLimits,
+  getTradeStats,
+  getRecentTrades,
+  getUserSettings,
+  updateBotMode,
+  changePin,
 } from './db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +40,10 @@ const isAdmin = (userId) => {
   return ADMIN_IDS.includes(id) || ADMIN_IDS.includes(userId);
 };
 
-// POST /api/visitors/sync — record that user opened the app (no auth)
+// ══════════════════════════════════════
+// Visitors
+// ══════════════════════════════════════
+
 app.post('/api/visitors/sync', (req, res) => {
   try {
     const { telegramId, username, firstName } = req.body;
@@ -45,7 +56,10 @@ app.post('/api/visitors/sync', (req, res) => {
   }
 });
 
-// GET /api/auth/check?telegramId= — check if user is registered
+// ══════════════════════════════════════
+// Auth
+// ══════════════════════════════════════
+
 app.get('/api/auth/check', (req, res) => {
   try {
     const telegramId = req.query.telegramId;
@@ -57,7 +71,6 @@ app.get('/api/auth/check', (req, res) => {
   }
 });
 
-// POST /api/auth/register — create account (first time): set PIN
 app.post('/api/auth/register', (req, res) => {
   try {
     const { pin, confirmPin, telegramId, username, firstName, referredBy } = req.body;
@@ -96,7 +109,6 @@ app.post('/api/auth/register', (req, res) => {
   }
 });
 
-// POST /api/auth/login — login with PIN (existing users only)
 app.post('/api/auth/login', (req, res) => {
   try {
     const { pin, telegramId } = req.body;
@@ -107,7 +119,7 @@ app.post('/api/auth/login', (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, error: 'not_registered' });
     }
-    if (user.pin_hash !== String(pin)) {
+    if (!verifyPin(pin, user.pin_hash)) {
       return res.status(401).json({ success: false, error: 'wrong_pin' });
     }
     updateLastActive(user.id);
@@ -126,7 +138,207 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
-// GET /api/users — list all people (registered + visitors who opened app) (admin only)
+app.post('/api/auth/logout', (_req, res) => {
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════
+// Wallet
+// ══════════════════════════════════════
+
+app.get('/api/wallet/balance', (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const data = getWalletBalances(userId);
+    res.json({
+      totalUsd: data.totalUsd,
+      estimatedDailyIncome: data.totalUsd * 0.05,
+      estimatedDailyPercent: 5,
+      balanceByNetwork: data.balanceByNetwork,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.get('/api/wallet/deposit-address', (req, res) => {
+  try {
+    const { userId, network } = req.query;
+    if (!userId || !network) return res.status(400).json({ error: 'userId and network required' });
+    const address = getDepositAddress(userId, network);
+    const networkNames = {
+      TON: 'THE OPEN NETWORK', BSC: 'BNB SMART CHAIN', TRC: 'TRON',
+      SOL: 'SOLANA', BTC: 'BITCOIN', ETH: 'ETHEREUM',
+    };
+    res.json({
+      address,
+      network,
+      networkFullName: networkNames[network] || network,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.get('/api/wallet/withdraw-limits', (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    res.json(getWithdrawLimits(userId));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.post('/api/wallet/withdraw', (req, res) => {
+  try {
+    const { userId, network, amount, address } = req.body;
+    if (!userId || !network || !amount || !address) {
+      return res.status(400).json({ error: 'userId, network, amount, address required' });
+    }
+    const limits = getWithdrawLimits(userId);
+    if (amount < limits.minAmount) {
+      return res.status(400).json({ error: `Минимальная сумма вывода $${limits.minAmount}` });
+    }
+    if (amount > limits.remainingToday) {
+      return res.status(400).json({ error: `Превышен дневной лимит` });
+    }
+    // For now, return pending status (actual withdrawal would require blockchain integration)
+    res.json({
+      transactionId: `tx_${Date.now()}`,
+      status: 'pending',
+      estimatedTime: '10-30 min',
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ══════════════════════════════════════
+// Trades / Stats
+// ══════════════════════════════════════
+
+app.get('/api/trades/recent', (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const trades = getRecentTrades(userId);
+    res.json({ trades });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.get('/api/stats/pnl', (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const stats = getTradeStats(userId);
+    res.json(stats);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ══════════════════════════════════════
+// Referrals
+// ══════════════════════════════════════
+
+app.get('/api/referral/info', (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const u = getReferralInfo(userId);
+    if (!u) return res.status(404).json({ error: 'not_found' });
+    res.json({
+      refCode: u.ref_code,
+      invitedCount: u.referral_count ?? 0,
+      totalEarned: u.referral_earnings ?? 0,
+      refLink: `https://t.me/ZyphexAutotraidingBot/app?startapp=${u.ref_code}`,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ══════════════════════════════════════
+// Settings
+// ══════════════════════════════════════
+
+app.get('/api/settings', (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const settings = getUserSettings(userId);
+    if (!settings) return res.status(404).json({ error: 'not_found' });
+    res.json(settings);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.put('/api/settings/bot-mode', (req, res) => {
+  try {
+    const { userId, mode } = req.body;
+    if (!userId || !mode) return res.status(400).json({ error: 'userId and mode required' });
+    const ok = updateBotMode(userId, mode);
+    if (!ok) return res.status(400).json({ error: 'invalid_mode' });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.post('/api/settings/change-pin', (req, res) => {
+  try {
+    const { userId, oldPin, newPin, confirmNewPin } = req.body;
+    if (!userId || !oldPin || !newPin || !confirmNewPin) {
+      return res.status(400).json({ success: false, error: 'all fields required' });
+    }
+    if (newPin !== confirmNewPin) {
+      return res.status(400).json({ success: false, error: 'pin_mismatch' });
+    }
+    const result = changePin(userId, oldPin, newPin);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, error: 'server_error' });
+  }
+});
+
+app.post('/api/settings/reset-balance', (req, res) => {
+  try {
+    const { userId, confirmPin } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const user = findUserByTelegramId(userId.replace(/^tg_/, ''));
+    if (user && confirmPin && !verifyPin(confirmPin, user.pin_hash)) {
+      return res.status(401).json({ error: 'wrong_pin' });
+    }
+    resetUserBalance(userId);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ══════════════════════════════════════
+// Admin
+// ══════════════════════════════════════
+
 app.get('/api/users', (req, res) => {
   try {
     const userId = req.query.userId || req.headers['x-user-id'];
@@ -141,7 +353,6 @@ app.get('/api/users', (req, res) => {
   }
 });
 
-// PATCH /api/users/:id — update user (admin only)
 app.patch('/api/users/:id', (req, res) => {
   try {
     const adminUserId = req.query.userId || req.headers['x-user-id'];
@@ -164,7 +375,6 @@ app.patch('/api/users/:id', (req, res) => {
   }
 });
 
-// POST /api/users/:id/bonus — add bonus (admin only)
 app.post('/api/users/:id/bonus', (req, res) => {
   try {
     const adminUserId = req.query.userId || req.headers['x-user-id'];
@@ -184,7 +394,6 @@ app.post('/api/users/:id/bonus', (req, res) => {
   }
 });
 
-// POST /api/users/:id/reset-balance — reset balance to 0 (admin only)
 app.post('/api/users/:id/reset-balance', (req, res) => {
   try {
     const adminUserId = req.query.userId || req.headers['x-user-id'];
@@ -200,24 +409,9 @@ app.post('/api/users/:id/reset-balance', (req, res) => {
   }
 });
 
-// GET /api/referral/info?userId= — refCode, invitedCount, earned
-app.get('/api/referral/info', (req, res) => {
-  try {
-    const userId = req.query.userId;
-    if (!userId) return res.status(400).json({ error: 'userId required' });
-    const u = getReferralInfo(userId);
-    if (!u) return res.status(404).json({ error: 'not_found' });
-    res.json({
-      refCode: u.ref_code,
-      invitedCount: u.referral_count ?? 0,
-      totalEarned: u.referral_earnings ?? 0,
-      refLink: `https://t.me/ZyphexAutotraidingBot/app?startapp=${u.ref_code}`,
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
-});
+// ══════════════════════════════════════
+// Start
+// ══════════════════════════════════════
 
 const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, () => console.log(`Zyphex API listening on port ${PORT}`));
