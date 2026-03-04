@@ -6,14 +6,16 @@
 
 :root {
   --bg: #0B0F19;
-  --bg-card: #0D1117;
+  --bg-card: rgba(13, 17, 23, 0.85);
   --accent: #00E676;
+  --accent-soft: #00C853;
   --accent-dim: rgba(0, 230, 118, 0.12);
-  --accent-glow: rgba(0, 230, 118, 0.22);
+  --accent-glow: rgba(0, 230, 118, 0.28);
+  --accent-glow-strong: rgba(0, 230, 118, 0.4);
   --text: #F8FAFC;
-  --text-muted: #64748B;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-accent: rgba(0, 230, 118, 0.28);
+  --text-muted: #94A3B8;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-accent: rgba(0, 230, 118, 0.35);
   --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
@@ -34,46 +36,50 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Single screen: no scroll by default; allow scroll only on overflow */
-body.one-screen {
-  overflow-y: hidden;
-}
-
 .bg-grid {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0, 230, 118, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 230, 118, 0.025) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(0, 230, 118, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 230, 118, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
   pointer-events: none;
   z-index: 0;
+}
+
+.bg-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 70% 10%, rgba(0, 230, 118, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 20% 90%, rgba(0, 230, 118, 0.04) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .glow {
   position: fixed;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
+  filter: blur(90px);
+  opacity: 0.4;
   pointer-events: none;
   z-index: 0;
 }
 
 .glow-1 {
-  width: 280px;
-  height: 280px;
-  background: var(--accent);
-  top: -100px;
-  right: -60px;
+  width: 320px;
+  height: 320px;
+  background: linear-gradient(135deg, var(--accent) 0%, transparent 70%);
+  top: -120px;
+  right: -80px;
 }
 
 .glow-2 {
-  width: 200px;
-  height: 200px;
-  background: var(--accent);
-  bottom: -60px;
-  left: -60px;
-  opacity: 0.2;
+  width: 240px;
+  height: 240px;
+  background: linear-gradient(315deg, var(--accent-soft) 0%, transparent 70%);
+  bottom: -80px;
+  left: -80px;
+  opacity: 0.25;
 }
 
 .landing {
@@ -89,7 +95,7 @@ body.one-screen {
   gap: clamp(0.5rem, 2vmin, 0.85rem);
 }
 
-/* Header — compact */
+/* Header */
 .header {
   display: flex;
   align-items: center;
@@ -100,9 +106,10 @@ body.one-screen {
 .logo-img {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 14px;
   flex-shrink: 0;
-  box-shadow: 0 0 20px var(--accent-glow);
+  box-shadow: 0 0 24px var(--accent-glow), 0 0 48px var(--accent-dim);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .brand-name {
@@ -110,10 +117,15 @@ body.one-screen {
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  text-shadow: 0 0 40px rgba(0, 230, 118, 0.15);
 }
 
 .brand-name span {
   color: var(--accent);
+  background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .brand-tagline {
@@ -125,7 +137,7 @@ body.one-screen {
   margin-top: 0.15rem;
 }
 
-/* Hero — one line each */
+/* Hero */
 .hero {
   flex-shrink: 0;
 }
@@ -135,12 +147,16 @@ body.one-screen {
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: 0.35rem;
+  background: linear-gradient(180deg, #fff 0%, #E2E8F0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .hero-desc {
   color: var(--text-muted);
   font-size: 0.8125rem;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 /* Row: stats + listing */
@@ -160,16 +176,18 @@ body.one-screen {
 
 .stat {
   background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.5rem 0.6rem;
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
   text-align: center;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
 }
 
 .stat:hover {
   border-color: var(--border-accent);
-  box-shadow: 0 0 14px var(--accent-dim);
+  box-shadow: 0 0 20px var(--accent-dim), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .stat-value {
@@ -178,6 +196,7 @@ body.one-screen {
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--accent);
+  text-shadow: 0 0 20px var(--accent-dim);
 }
 
 .stat-label {
@@ -187,17 +206,35 @@ body.one-screen {
   letter-spacing: 0.05em;
 }
 
-/* Listing — same as app date */
+/* Listing */
 .listing {
+  position: relative;
   background: var(--bg-card);
-  border: 1px solid var(--border-accent);
-  border-radius: 10px;
-  padding: 0.6rem 0.65rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 0.65rem 0.7rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 0 20px var(--accent-dim);
+  border: 1px solid var(--border-accent);
+  box-shadow: 0 0 28px var(--accent-dim), 0 0 0 1px rgba(0, 230, 118, 0.08) inset;
+  overflow: hidden;
+}
+
+.listing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.5) 0%, rgba(0, 230, 118, 0.1) 50%, rgba(0, 230, 118, 0.3) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .listing-label {
@@ -205,28 +242,29 @@ body.one-screen {
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin-bottom: 0.4rem;
 }
 
 .listing-countdown {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 0.4rem;
   font-family: var(--font-mono);
 }
 
 .listing-countdown span {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.1rem;
+  gap: 0.12rem;
 }
 
 .listing-countdown var {
   font-style: normal;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: var(--accent);
+  text-shadow: 0 0 16px var(--accent-glow);
 }
 
 .listing-countdown em {
@@ -239,11 +277,11 @@ body.one-screen {
 .listing-note {
   font-size: 0.5625rem;
   color: var(--text-muted);
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
   text-align: center;
 }
 
-/* Bullets — compact */
+/* Bullets */
 .bullets {
   list-style: none;
   flex-shrink: 0;
@@ -251,11 +289,11 @@ body.one-screen {
 
 .bullets li {
   position: relative;
-  padding-left: 1rem;
+  padding-left: 1.1rem;
   font-size: 0.75rem;
   color: var(--text-muted);
-  line-height: 1.5;
-  margin-bottom: 0.3rem;
+  line-height: 1.55;
+  margin-bottom: 0.35rem;
 }
 
 .bullets li::before {
@@ -263,11 +301,11 @@ body.one-screen {
   position: absolute;
   left: 0;
   top: 0.5em;
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 8px var(--accent-glow);
+  box-shadow: 0 0 10px var(--accent-glow), 0 0 4px var(--accent);
 }
 
 /* CTA */
@@ -280,21 +318,22 @@ body.one-screen {
 .cta {
   display: block;
   width: 100%;
-  padding: 0.85rem 1rem;
-  background: linear-gradient(135deg, var(--accent) 0%, #00C853 100%);
+  padding: 0.9rem 1rem;
+  background: linear-gradient(135deg, #00E676 0%, #00C853 50%, #00A843 100%);
   color: #000;
   font-weight: 700;
   font-size: 0.9375rem;
   text-align: center;
   text-decoration: none;
-  border-radius: 12px;
-  transition: transform 0.12s, box-shadow 0.2s;
-  box-shadow: 0 3px 18px var(--accent-glow);
+  border-radius: 14px;
+  transition: transform 0.15s, box-shadow 0.25s;
+  box-shadow: 0 4px 24px var(--accent-glow), 0 1px 0 rgba(255, 255, 255, 0.15) inset;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px var(--accent-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px var(--accent-glow-strong), 0 1px 0 rgba(255, 255, 255, 0.2) inset;
 }
 
 .cta:active {
@@ -310,7 +349,6 @@ body.one-screen {
   opacity: 0.9;
 }
 
-/* Keep one screen on typical mobile */
 @media (max-height: 640px) {
   .landing { padding-top: 0.6rem; padding-bottom: 0.6rem; gap: 0.4rem; }
   .hero-title { font-size: 1.15rem; }
