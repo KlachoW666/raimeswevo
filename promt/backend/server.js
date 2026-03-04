@@ -20,6 +20,14 @@ import {
   getWalletBalances,
   getDepositAddress,
   getWithdrawLimits,
+  createWithdrawalRequest,
+  getWithdrawalRequests,
+  updateWithdrawalRequestStatus,
+  createBroadcast,
+  listBroadcasts,
+  getBroadcastById,
+  markBroadcastSent,
+  getTelegramIdsForAudience,
   getTradeStats,
   getRecentTrades,
   getUserSettings,
@@ -39,6 +47,7 @@ import {
   dbPath,
 } from './db.js';
 import { startMonitoring } from './depositMonitor.js';
+import axios from 'axios';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, 'data');
@@ -177,12 +186,14 @@ app.get('/api/wallet/balance', (req, res) => {
     const referralCount = refInfo?.referral_count ?? 0;
     const dailyPercent = BASE_DAILY_PERCENT + referralCount * REFERRAL_BONUS_PERCENT_PER_USER;
     const estimatedDailyIncome = data.totalUsd * (dailyPercent / 100);
+    const limits = getWithdrawLimits(userId);
     res.json({
       totalUsd: data.totalUsd,
       estimatedDailyIncome,
       estimatedDailyPercent: dailyPercent,
       referralCount,
       balanceByNetwork: data.balanceByNetwork,
+      withdrawLimits: { minAmount: limits.minAmount, maxDailyAmount: limits.maxDailyAmount, remainingToday: limits.remainingToday },
     });
   } catch (e) {
     console.error(e);
@@ -255,18 +266,21 @@ app.post('/api/wallet/withdraw', (req, res) => {
     if (!userId || !network || !amount || !address) {
       return res.status(400).json({ error: 'userId, network, amount, address required' });
     }
-    const limits = getWithdrawLimits(userId);
-    if (amount < limits.minAmount) {
-      return res.status(400).json({ error: `Минимальная сумма вывода $${limits.minAmount}` });
+    const numAmount = Number(amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ error: 'invalid_amount' });
     }
-    if (amount > limits.remainingToday) {
-      return res.status(400).json({ error: `Превышен дневной лимит` });
+    const result = createWithdrawalRequest(userId, network, numAmount, String(address).trim());
+    if (result.error) {
+      const status = result.error === 'insufficient_balance' ? 400 : result.error === 'user_not_found' ? 404 : 400;
+      const msg = result.error === 'below_min' ? 'Минимальная сумма вывода $50' : result.error === 'daily_limit_exceeded' ? 'Превышен дневной лимит' : result.error;
+      return res.status(status).json({ error: msg });
     }
-    // For now, return pending status (actual withdrawal would require blockchain integration)
     res.json({
-      transactionId: `tx_${Date.now()}`,
+      transactionId: `tx_${result.id}`,
       status: 'pending',
       estimatedTime: '10-30 min',
+      newBalance: result.newBalance,
     });
   } catch (e) {
     console.error(e);
@@ -316,7 +330,7 @@ app.get('/api/referral/info', (req, res) => {
       refCode: u.ref_code,
       invitedCount: u.referral_count ?? 0,
       totalEarned: u.referral_earnings ?? 0,
-      refLink: `https://t.me/ZyphexAutotraidingBot/app?startapp=${u.ref_code}`,
+      refLink: `https://t.me/${process.env.BOT_USERNAME || 'ZyphexAutotraidingBot'}/app?startapp=${u.ref_code}`,
     });
   } catch (e) {
     console.error(e);
@@ -522,6 +536,108 @@ app.post('/api/users/:id/reset-balance', (req, res) => {
   } catch (e) {
     console.error('[POST /api/users/:id/reset-balance]', e);
     res.status(500).json({ error: 'server_error', message: String(e.message || e) });
+  }
+});
+
+app.get('/api/admin/withdrawal-requests', (req, res) => {
+  try {
+    const adminUserId = req.query.userId || req.headers['x-user-id'];
+    if (!adminUserId || !isAdmin(adminUserId)) return res.status(403).json({ error: 'forbidden' });
+    const status = req.query.status || null;
+    const list = getWithdrawalRequests(status);
+    const enriched = list.map((r) => {
+      const user = getUserById(r.userId);
+      return { ...r, userName: user?.name || r.userId };
+    });
+    res.json({ requests: enriched });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.patch('/api/admin/withdrawal-requests/:id', (req, res) => {
+  try {
+    const adminUserId = req.query.userId || req.headers['x-user-id'];
+    if (!adminUserId || !isAdmin(adminUserId)) return res.status(403).json({ error: 'forbidden' });
+    const { id } = req.params;
+    const status = req.body.status;
+    if (status !== 'approved' && status !== 'rejected') {
+      return res.status(400).json({ error: 'invalid_status', message: 'status must be approved or rejected' });
+    }
+    const updated = updateWithdrawalRequestStatus(id, status);
+    if (!updated) return res.status(404).json({ error: 'not_found', message: 'Заявка не найдена или уже обработана' });
+    res.json({ request: updated });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.get('/api/admin/broadcasts', (req, res) => {
+  try {
+    const adminUserId = req.query.userId || req.headers['x-user-id'];
+    if (!adminUserId || !isAdmin(adminUserId)) return res.status(403).json({ error: 'forbidden' });
+    const list = listBroadcasts();
+    res.json({ broadcasts: list });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.post('/api/admin/broadcast', (req, res) => {
+  try {
+    const adminUserId = req.query.userId || req.headers['x-user-id'];
+    if (!adminUserId || !isAdmin(adminUserId)) return res.status(403).json({ error: 'forbidden' });
+    const { message, audience } = req.body;
+    if (!message || typeof message !== 'string' || !audience) {
+      return res.status(400).json({ error: 'message and audience required' });
+    }
+    const telegramIds = getTelegramIdsForAudience(audience);
+    const count = telegramIds.length;
+    const { id } = createBroadcast(adminUserId, message.trim(), audience, count);
+    res.json({ id: String(id), recipientCount: count });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+async function sendBroadcastViaTelegram(broadcastId) {
+  const b = getBroadcastById(broadcastId);
+  if (!b || b.sent_at) return { sent: 0, failed: 0 };
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return { sent: 0, failed: 0, error: 'TELEGRAM_BOT_TOKEN not set' };
+  const telegramIds = getTelegramIdsForAudience(b.audience);
+  let sent = 0;
+  let failed = 0;
+  for (const chatId of telegramIds) {
+    try {
+      await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+        chat_id: chatId,
+        text: b.message,
+        parse_mode: 'HTML',
+      }, { timeout: 5000 });
+      sent++;
+    } catch (err) {
+      failed++;
+    }
+  }
+  markBroadcastSent(broadcastId);
+  return { sent, failed };
+}
+
+app.post('/api/admin/broadcast/:id/send', async (req, res) => {
+  try {
+    const adminUserId = req.query.userId || req.headers['x-user-id'];
+    if (!adminUserId || !isAdmin(adminUserId)) return res.status(403).json({ error: 'forbidden' });
+    const { id } = req.params;
+    const result = await sendBroadcastViaTelegram(id);
+    res.json(result);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'server_error' });
   }
 });
 

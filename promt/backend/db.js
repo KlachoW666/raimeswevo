@@ -133,6 +133,35 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS withdrawal_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    network TEXT NOT NULL,
+    amount REAL NOT NULL,
+    address TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at TEXT DEFAULT (datetime('now')),
+    processed_at TEXT,
+    UNIQUE(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_status ON withdrawal_requests(status);
+  CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_user ON withdrawal_requests(user_id);
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS broadcasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_user_id TEXT NOT NULL,
+    message TEXT NOT NULL,
+    audience TEXT NOT NULL,
+    recipient_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    sent_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_broadcasts_created ON broadcasts(created_at);
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS app_settings (
     key TEXT PRIMARY KEY,
     value TEXT
@@ -611,6 +640,120 @@ export function getWithdrawLimits(userId) {
     maxDailyAmount: 1000,
     remainingToday: Math.max(0, 1000 - withdrawnToday),
   };
+}
+
+// Withdrawal requests: create (deduct balance, record request, update daily limit)
+export function createWithdrawalRequest(userId, network, amount, address) {
+  const user = db.prepare('SELECT balance_usdt FROM users WHERE id = ?').get(userId);
+  if (!user) return { error: 'user_not_found' };
+  const balance = user.balance_usdt ?? 0;
+  if (balance < amount) return { error: 'insufficient_balance' };
+  const limits = getWithdrawLimits(userId);
+  if (amount < limits.minAmount) return { error: 'below_min' };
+  if (amount > limits.remainingToday) return { error: 'daily_limit_exceeded' };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const newBalance = Math.round((balance - amount) * 100) / 100;
+  const run = db.transaction(() => {
+    db.prepare(`UPDATE users SET balance_usdt = ?, last_active = datetime('now') WHERE id = ?`).run(newBalance, userId);
+    db.prepare(`
+      INSERT INTO withdrawal_limits (user_id, date, withdrawn_today) VALUES (?, ?, ?)
+      ON CONFLICT(user_id, date) DO UPDATE SET withdrawn_today = withdrawn_today + excluded.withdrawn_today
+    `).run(userId, today, amount);
+    const r = db.prepare(
+      `INSERT INTO withdrawal_requests (user_id, network, amount, address, status) VALUES (?, ?, ?, ?, 'pending')`
+    ).run(userId, network, amount, address);
+    return { id: r.lastInsertRowid, newBalance };
+  });
+  return run;
+}
+
+export function getWithdrawalRequests(statusFilter = null) {
+  const rows = statusFilter
+    ? db.prepare('SELECT id, user_id, network, amount, address, status, created_at, processed_at FROM withdrawal_requests WHERE status = ? ORDER BY created_at DESC LIMIT 500').all(statusFilter)
+    : db.prepare('SELECT id, user_id, network, amount, address, status, created_at, processed_at FROM withdrawal_requests ORDER BY created_at DESC LIMIT 500').all();
+  return rows.map(r => ({
+    id: String(r.id),
+    userId: r.user_id,
+    network: r.network,
+    amount: r.amount,
+    address: r.address,
+    status: r.status,
+    createdAt: r.created_at,
+    processedAt: r.processed_at || null,
+  }));
+}
+
+export function getWithdrawalRequestById(id) {
+  const r = db.prepare('SELECT * FROM withdrawal_requests WHERE id = ?').get(id);
+  return r || null;
+}
+
+export function updateWithdrawalRequestStatus(id, status) {
+  const row = db.prepare('SELECT user_id, amount, status FROM withdrawal_requests WHERE id = ?').get(id);
+  if (!row || row.status !== 'pending') return null;
+  if (status === 'rejected') {
+    const today = new Date().toISOString().slice(0, 10);
+    db.transaction(() => {
+      db.prepare(`UPDATE withdrawal_requests SET status = 'rejected', processed_at = datetime('now') WHERE id = ?`).run(id);
+      const u = db.prepare('SELECT balance_usdt FROM users WHERE id = ?').get(row.user_id);
+      const newBalance = (u?.balance_usdt ?? 0) + row.amount;
+      db.prepare(`UPDATE users SET balance_usdt = ?, last_active = datetime('now') WHERE id = ?`).run(newBalance, row.user_id);
+      const lim = db.prepare('SELECT withdrawn_today FROM withdrawal_limits WHERE user_id = ? AND date = ?').get(row.user_id, today);
+      if (lim) {
+        const newWithdrawn = Math.max(0, (lim.withdrawn_today ?? 0) - row.amount);
+        db.prepare(`UPDATE withdrawal_limits SET withdrawn_today = ? WHERE user_id = ? AND date = ?`).run(newWithdrawn, row.user_id, today);
+      }
+    })();
+  } else if (status === 'approved') {
+    db.prepare(`UPDATE withdrawal_requests SET status = 'approved', processed_at = datetime('now') WHERE id = ?`).run(id);
+  }
+  return getWithdrawalRequestById(id);
+}
+
+// Broadcasts (save to DB; sending via Telegram is in server)
+export function createBroadcast(adminUserId, message, audience, recipientCount) {
+  const r = db.prepare(
+    'INSERT INTO broadcasts (admin_user_id, message, audience, recipient_count) VALUES (?, ?, ?, ?)'
+  ).run(adminUserId, message, audience, recipientCount);
+  return { id: r.lastInsertRowid };
+}
+
+export function listBroadcasts(limit = 50) {
+  const rows = db.prepare(
+    'SELECT id, admin_user_id, message, audience, recipient_count, created_at, sent_at FROM broadcasts ORDER BY created_at DESC LIMIT ?'
+  ).all(limit);
+  return rows.map(r => ({
+    id: String(r.id),
+    adminUserId: r.admin_user_id,
+    text: r.message,
+    audience: r.audience,
+    recipientCount: r.recipient_count ?? 0,
+    sentAt: r.sent_at ? r.sent_at.slice(0, 16).replace('T', ' ') : r.created_at?.slice(0, 16).replace('T', ' '),
+    createdAt: r.created_at,
+  }));
+}
+
+export function getBroadcastById(id) {
+  const r = db.prepare('SELECT * FROM broadcasts WHERE id = ?').get(id);
+  return r || null;
+}
+
+export function markBroadcastSent(id) {
+  db.prepare(`UPDATE broadcasts SET sent_at = datetime('now') WHERE id = ?`).run(id);
+}
+
+export function getTelegramIdsForAudience(audience) {
+  if (audience === 'all') {
+    return db.prepare('SELECT telegram_id FROM users WHERE is_banned = 0 AND telegram_id IS NOT NULL AND telegram_id != ""').all().map(r => r.telegram_id);
+  }
+  if (audience === 'with_balance') {
+    return db.prepare('SELECT telegram_id FROM users WHERE is_banned = 0 AND (balance_usdt IS NULL OR balance_usdt > 0) AND telegram_id IS NOT NULL AND telegram_id != ""').all().map(r => r.telegram_id);
+  }
+  if (audience === 'vip') {
+    return db.prepare('SELECT telegram_id FROM users WHERE is_banned = 0 AND is_vip = 1 AND telegram_id IS NOT NULL AND telegram_id != ""').all().map(r => r.telegram_id);
+  }
+  return [];
 }
 
 // ══════════════════════════════════════

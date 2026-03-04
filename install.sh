@@ -66,35 +66,37 @@ PORT=$BACKEND_PORT pm2 start server.js --name zyphex-api --cwd "$APP_DIR/promt/b
 pm2 save 2>/dev/null || true
 pm2 startup 2>/dev/null || true
 
-# 5. Configure Nginx (HTTP + HTTPS so Telegram Mini App can open the URL)
+# 5. Configure Nginx (HTTP + HTTPS) for domain zyphex.ru
 echo "[5/6] Configuring Nginx..."
-SERVER_IP="${SERVER_IP:-$(curl -s --max-time 3 ifconfig.me 2>/dev/null || echo '188.127.230.83')}"
+DOMAIN="${DOMAIN:-zyphex.ru}"
+SERVER_IP="${SERVER_IP:-188.127.230.83}"
+BACKEND_PORT="${BACKEND_PORT:-3001}"
 SSL_DIR="/etc/nginx/ssl/miniapp"
 mkdir -p "$SSL_DIR"
 
+# Self-signed cert for domain (used until/if Let's Encrypt is obtained)
 if [ ! -f "$SSL_DIR/cert.pem" ]; then
-    echo "Generating self-signed SSL certificate for $SERVER_IP..."
+    echo "Generating self-signed SSL certificate for $DOMAIN..."
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
         -keyout "$SSL_DIR/key.pem" -out "$SSL_DIR/cert.pem" \
-        -subj "/CN=$SERVER_IP" \
-        -addext "subjectAltName=IP:$SERVER_IP"
+        -subj "/CN=$DOMAIN" \
+        -addext "subjectAltName=DNS:$DOMAIN,DNS:www.$DOMAIN,IP:$SERVER_IP"
     chmod 600 "$SSL_DIR/key.pem"
 fi
 
-BACKEND_PORT="${BACKEND_PORT:-3001}"
 NGINX_CONF="/etc/nginx/sites-available/miniapp"
 cat > "$NGINX_CONF" << NGINXEOF
 server {
     listen 80;
     listen [::]:80;
-    server_name _;
+    server_name $DOMAIN www.$DOMAIN $SERVER_IP;
     return 301 https://\$host\$request_uri;
 }
 
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name _;
+    server_name $DOMAIN www.$DOMAIN $SERVER_IP;
 
     ssl_certificate     $SSL_DIR/cert.pem;
     ssl_certificate_key $SSL_DIR/key.pem;
@@ -127,21 +129,27 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl restart nginx
 systemctl enable nginx 2>/dev/null || true
 
+# Optional: Let's Encrypt for domain (run if A-record zyphex.ru -> $SERVER_IP)
+if command -v certbot >/dev/null 2>&1; then
+    echo "Trying Let's Encrypt for $DOMAIN..."
+    certbot --nginx -d "$DOMAIN" -d "www.$DOMAIN" --non-interactive --agree-tos -m "${CERTBOT_EMAIL:-admin@zyphex.ru}" 2>/dev/null && systemctl reload nginx 2>/dev/null || echo "  (certbot skipped or failed — using self-signed; run manually later if needed)"
+fi
+
 # 6. Final Instructions
 echo "======================================"
 echo "          Setup Complete!             "
 echo "======================================"
 echo ""
-echo "Open the app in Telegram (BotFather -> Mini App URL):"
-echo "  https://$SERVER_IP"
+echo "Mini App URL (BotFather -> Mini App):"
+echo "  https://$DOMAIN"
 echo ""
-echo "Frontend:  Nginx serves from $APP_DIR/promt/frontend/dist (HTTP -> redirect to HTTPS)"
-echo "Backend:   pm2 (port ${BACKEND_PORT:-3001}), Nginx proxies /api/ to it."
+echo "Domain:    $DOMAIN, www.$DOMAIN (VPS $SERVER_IP)"
+echo "Frontend:  Nginx from $APP_DIR/promt/frontend/dist (HTTP -> HTTPS)"
+echo "Backend:   pm2 port $BACKEND_PORT, Nginx proxies /api/"
 echo "Database:  $APP_DIR/promt/backend/data/zyphex.db (preserved on update)"
 echo ""
-echo "If connection refused: 1) Open ports 80,443 in hosting panel firewall  2) pm2 list  3) systemctl status nginx"
+echo "If connection refused: open ports 80,443 in hosting firewall; pm2 list; systemctl status nginx"
 echo "Check:     pm2 list && pm2 logs zyphex-api --lines 5"
 echo ""
-echo "Optional (domain + Let's Encrypt): point A-record to this IP, then:"
-echo "  certbot --nginx -d your-domain.com && systemctl reload nginx"
+echo "To get Let's Encrypt cert later: certbot --nginx -d $DOMAIN -d www.$DOMAIN"
 echo "======================================"

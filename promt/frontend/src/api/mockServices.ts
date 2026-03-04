@@ -92,10 +92,12 @@ export const MockAPI = {
                 referralCount?: number;
                 estimatedDailyPercent?: number;
                 estimatedDailyIncome?: number;
+                withdrawLimits?: { minAmount: number; maxDailyAmount: number; remainingToday: number };
             }>(`/api/wallet/balance?userId=${encodeURIComponent(userId)}`);
             const wallet = useWalletStore.getState();
             wallet.setReferralCount(res.referralCount ?? 0);
             wallet.setBalances(res.totalUsd, res.balanceByNetwork ?? {});
+            if (res.withdrawLimits) wallet.setWithdrawLimits(res.withdrawLimits);
         } catch {
             // Silently fail — local store keeps previous values
         }
@@ -182,28 +184,27 @@ export const MockAPI = {
         }
     },
 
-    async requestWithdrawal(network: Network, amount: number, _address: string): Promise<{ success: boolean; error?: string }> {
-        await delay(1200);
-        const store = useWalletStore.getState();
-
-        if (amount < store.withdrawLimits.minAmount) {
-            return { success: false, error: `Минимальная сумма вывода $${store.withdrawLimits.minAmount}` };
+    async requestWithdrawal(network: Network, amount: number, address: string): Promise<{ success: boolean; error?: string }> {
+        const userId = useUserStore.getState().userId;
+        if (!userId) return { success: false, error: 'Необходима авторизация' };
+        try {
+            const res = await api.post<{ transactionId: string; status: string; newBalance?: number }>('/api/wallet/withdraw', {
+                userId,
+                network,
+                amount,
+                address,
+            });
+            await this.fetchBalance();
+            return { success: true };
+        } catch (e: unknown) {
+            const err = e instanceof Error ? e : null;
+            const msg = err?.message ?? '';
+            const data = (e as { status?: number; detail?: string })?.detail;
+            if (msg === 'insufficient_balance' || /недостаточно|insufficient/i.test(msg)) return { success: false, error: 'Недостаточно средств' };
+            if (msg === 'below_min' || /минимальн/i.test(String(data || msg))) return { success: false, error: 'Минимальная сумма вывода $50' };
+            if (msg === 'daily_limit_exceeded' || /дневной лимит|daily limit/i.test(String(data || msg))) return { success: false, error: 'Превышен дневной лимит' };
+            return { success: false, error: data || msg || 'Ошибка при выводе' };
         }
-        if (amount > store.withdrawLimits.remainingToday) {
-            return { success: false, error: `Превышен дневной лимит (${store.withdrawLimits.remainingToday} USDT осталось)` };
-        }
-        if (amount > store.balances[network]) {
-            return { success: false, error: `Недостаточно средств в сети ${network}` };
-        }
-
-        // Success simulation
-        store.decrementRemainingLimit(amount);
-
-        const newBalances = { ...store.balances };
-        newBalances[network] -= amount;
-        store.setBalances(store.totalUsd - amount, newBalances);
-
-        return { success: true };
     },
 
     // --- SETTINGS ---

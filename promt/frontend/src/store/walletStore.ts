@@ -23,6 +23,7 @@ interface WalletState {
     };
     setBalances: (total: number, networkBalances: Record<Network, number>) => void;
     setReferralCount: (count: number) => void;
+    setWithdrawLimits: (limits: { minAmount: number; maxDailyAmount: number; remainingToday: number }) => void;
     resetBalances: () => void;
     decrementRemainingLimit: (amount: number) => void;
 }
@@ -69,6 +70,14 @@ export const useWalletStore = create<WalletState>()(
                     expectedDailyIncomeUsd: state.totalUsd > 0 ? state.totalUsd * (pct / 100) : 0,
                 };
             }),
+
+            setWithdrawLimits: (limits) => set(() => ({
+                withdrawLimits: {
+                    minAmount: limits.minAmount,
+                    maxDailyAmount: limits.maxDailyAmount,
+                    remainingToday: limits.remainingToday,
+                },
+            })),
 
             resetBalances: () => set({
                 totalUsd: 0,

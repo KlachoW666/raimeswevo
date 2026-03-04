@@ -1,33 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdminStore } from '../../store/adminStore';
+import { useUserStore } from '../../store/userStore';
 import { useTelegram } from '../../hooks/useTelegram';
 import { Send, Users, Star, DollarSign, Clock } from 'lucide-react';
+import { fetchBroadcasts, createBroadcast, sendBroadcast, type BroadcastItem } from '../../api/adminApi';
 
 type Audience = 'all' | 'with_balance' | 'vip' | 'custom';
 
 export default function AdminBroadcast() {
-    const { users, broadcasts, addBroadcast, addAuditEntry } = useAdminStore();
+    const { addAuditEntry } = useAdminStore();
+    const { userId: adminUserId } = useUserStore();
     const { hapticFeedback, showAlert } = useTelegram();
     const [message, setMessage] = useState('');
     const [audience, setAudience] = useState<Audience>('all');
+    const [broadcasts, setBroadcasts] = useState<BroadcastItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
 
-    const getRecipientCount = () => {
-        switch (audience) {
-            case 'all': return users.filter(u => !u.isBanned).length;
-            case 'with_balance': return users.filter(u => u.balance > 0 && !u.isBanned).length;
-            case 'vip': return users.filter(u => u.vipStatus && !u.isBanned).length;
-            default: return 0;
+    useEffect(() => {
+        if (!adminUserId) return;
+        fetchBroadcasts(adminUserId).then(setBroadcasts).catch(() => setBroadcasts([]));
+    }, [adminUserId]);
+
+    const handleSend = async () => {
+        if (!message.trim() || !adminUserId) return;
+        setSending(true);
+        try {
+            const { id, recipientCount } = await createBroadcast(adminUserId, message.trim(), audience);
+            addAuditEntry({ adminId: adminUserId, action: 'Массовая рассылка', details: `${recipientCount} получателей · "${message.slice(0, 50)}..."` });
+            await sendBroadcast(adminUserId, id);
+            hapticFeedback?.notificationOccurred('success');
+            if (showAlert) showAlert(`Рассылка отправлена: ${recipientCount} пользователям`);
+            setMessage('');
+            const list = await fetchBroadcasts(adminUserId);
+            setBroadcasts(list);
+        } catch {
+            if (showAlert) showAlert('Ошибка при отправке рассылки');
+        } finally {
+            setSending(false);
         }
-    };
-
-    const handleSend = () => {
-        if (!message.trim()) return;
-        hapticFeedback?.notificationOccurred('success');
-        const count = getRecipientCount();
-        addBroadcast({ text: message, audience, recipientCount: count });
-        addAuditEntry({ adminId: 'admin', action: 'Массовая рассылка', details: `${count} получателей · "${message.slice(0, 50)}..."` });
-        if (showAlert) showAlert(`Рассылка отправлена ${count} пользователям`);
-        setMessage('');
     };
 
     const audienceOptions: { key: Audience; label: string; icon: any }[] = [
@@ -57,7 +68,7 @@ export default function AdminBroadcast() {
                 </div>
 
                 <div className="text-[10px] text-[#8B949E] mb-2">
-                    Получатели: <span className="text-white font-bold">{getRecipientCount()}</span> пользователей
+                    Получатели: по выбранной аудитории (все / с балансом / VIP) — количество уточняется при отправке
                 </div>
 
                 {/* Message Input */}
@@ -79,11 +90,11 @@ export default function AdminBroadcast() {
 
                 <button
                     onClick={handleSend}
-                    disabled={!message.trim()}
+                    disabled={!message.trim() || sending}
                     className="w-full mt-4 py-3 rounded-xl bg-[#00D26A] text-black font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:active:scale-100"
                 >
                     <Send size={16} />
-                    Отправить рассылку
+                    {sending ? 'Отправка...' : 'Отправить рассылку'}
                 </button>
             </div>
 
@@ -94,13 +105,13 @@ export default function AdminBroadcast() {
                     История рассылок
                 </h4>
                 {broadcasts.length === 0 ? (
-                    <div className="text-center text-[#8B949E] py-6 text-sm">Нет отправленных рассылок</div>
+                    <div className="text-center text-[#8B949E] py-6 text-sm">Нет рассылок. Заполните TELEGRAM_BOT_TOKEN в .env для отправки в Telegram.</div>
                 ) : (
                     <div className="space-y-2">
                         {broadcasts.map(b => (
                             <div key={b.id} className="bg-[#0D1117] rounded-lg p-3 border border-[#30363D]/30">
                                 <div className="flex justify-between items-start mb-1.5">
-                                    <span className="text-[10px] text-[#8B949E]">{b.sentAt}</span>
+                                    <span className="text-[10px] text-[#8B949E]">{b.sentAt || b.createdAt?.slice(0, 16).replace('T', ' ')}</span>
                                     <span className="text-[10px] bg-[#00D26A]/10 text-[#00D26A] px-2 py-0.5 rounded font-bold">
                                         {b.recipientCount} получ.
                                     </span>

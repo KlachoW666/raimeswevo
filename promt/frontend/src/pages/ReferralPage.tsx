@@ -4,7 +4,7 @@ import { useTelegram } from '../hooks/useTelegram';
 import { useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 
-const BOT_USERNAME = 'ZyphexAutotraidingBot';
+import { CONFIG } from '../config';
 
 export default function ReferralPage() {
     const { userId, referredBy } = useUserStore();
@@ -13,7 +13,7 @@ export default function ReferralPage() {
     const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
 
-    const refLink = `https://t.me/${BOT_USERNAME}/app?startapp=${refCode}`;
+    const refLink = `https://t.me/${CONFIG.BOT_USERNAME}/app?startapp=${refCode}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(refLink);

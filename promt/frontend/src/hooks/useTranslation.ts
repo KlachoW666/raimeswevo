@@ -8,7 +8,8 @@ export const translations = {
             exchange: 'Обмен',
             referrals: 'Рефералы',
             stats: 'Статистика',
-            settings: 'Настройки'
+            settings: 'Настройки',
+            support: 'Поддержка'
         },
         auth: {
             enterPin: 'Введите PIN',
@@ -216,7 +217,8 @@ export const translations = {
             exchange: 'Exchange',
             referrals: 'Referrals',
             stats: 'Stats',
-            settings: 'Settings'
+            settings: 'Settings',
+            support: 'Support'
         },
         auth: {
             enterPin: 'Enter PIN',

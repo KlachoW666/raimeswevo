@@ -53,10 +53,40 @@ function matchMemo(text, pendingList) {
 }
 
 // ══════════════════════════════════════
+// Exchange rates (CoinGecko, cache 60s)
+// ══════════════════════════════════════
+
+const RATES_CACHE_MS = 60_000;
+let ratesCache = { TON: 3.5, BNB: 600, ETH: 3500, TRC: 0.12, SOL: 140, BTC: 60000 };
+let ratesCacheTime = 0;
+
+async function getRates() {
+    if (Date.now() - ratesCacheTime < RATES_CACHE_MS) return ratesCache;
+    try {
+        const { data } = await axios.get(
+            'https://api.coingecko.com/api/v3/simple/price',
+            { params: { ids: 'the-open-network,binancecoin,ethereum,tron,solana,bitcoin', vs_currencies: 'usd' }, timeout: 8000 }
+        );
+        ratesCache = {
+            TON: Number(data?.['the-open-network']?.usd) || ratesCache.TON,
+            BNB: Number(data?.binancecoin?.usd) || ratesCache.BNB,
+            ETH: Number(data?.ethereum?.usd) || ratesCache.ETH,
+            TRC: Number(data?.tron?.usd) || ratesCache.TRC,
+            SOL: Number(data?.solana?.usd) || ratesCache.SOL,
+            BTC: Number(data?.bitcoin?.usd) || ratesCache.BTC,
+        };
+        ratesCacheTime = Date.now();
+    } catch (e) {
+        console.error('[Monitor] CoinGecko rates error:', e.message);
+    }
+    return ratesCache;
+}
+
+// ══════════════════════════════════════
 // TON — via Toncenter (free, no key needed)
 // ══════════════════════════════════════
 
-async function checkTON() {
+async function checkTON(rates = ratesCache) {
     const addr = ADMIN_WALLETS.TON;
     if (!addr) return;
     const pending = getPending('TON');
@@ -78,8 +108,7 @@ async function checkTON() {
             if (!match) continue;
 
             const tonAmount = Number(tx.in_msg?.value || 0) / 1e9;
-            // TON→USD: simplified static rate; in prod, fetch from CoinGecko
-            const usdValue = tonAmount * 3.5;
+            const usdValue = tonAmount * (rates.TON || 3.5);
             if (usdValue > 0) processDeposit(match.user_id, 'TON', match.memo_code, usdValue, hash);
         }
     } catch (e) {
@@ -91,7 +120,7 @@ async function checkTON() {
 // BSC — via BscScan (free key recommended)
 // ══════════════════════════════════════
 
-async function checkBSC() {
+async function checkBSC(rates = ratesCache) {
     const addr = ADMIN_WALLETS.BSC;
     if (!addr) return;
     const pending = getPending('BSC');
@@ -116,7 +145,7 @@ async function checkBSC() {
             if (!match) continue;
 
             const bnbAmount = Number(tx.value) / 1e18;
-            const usdValue = bnbAmount * 600; // Mock BNB price
+            const usdValue = bnbAmount * (rates.BNB || 600);
             if (usdValue > 0) processDeposit(match.user_id, 'BSC', match.memo_code, usdValue, tx.hash);
         }
     } catch (e) {
@@ -128,7 +157,7 @@ async function checkBSC() {
 // BNB — via BscScan (same chain as BSC, native BNB coin)
 // ══════════════════════════════════════
 
-async function checkBNB() {
+async function checkBNB(rates = ratesCache) {
     const addr = ADMIN_WALLETS.BNB;
     if (!addr) return;
     const pending = getPending('BNB');
@@ -152,7 +181,7 @@ async function checkBNB() {
             if (!match) continue;
 
             const bnbAmount = Number(tx.value) / 1e18;
-            const usdValue = bnbAmount * 600; // BNB price (update periodically)
+            const usdValue = bnbAmount * (rates.BNB || 600);
             if (usdValue > 0) processDeposit(match.user_id, 'BNB', match.memo_code, usdValue, tx.hash);
         }
     } catch (e) {
@@ -164,7 +193,7 @@ async function checkBNB() {
 // ETH — via Etherscan (free key recommended)
 // ══════════════════════════════════════
 
-async function checkETH() {
+async function checkETH(rates = ratesCache) {
     const addr = ADMIN_WALLETS.ETH;
     if (!addr) return;
     const pending = getPending('ETH');
@@ -188,7 +217,7 @@ async function checkETH() {
             if (!match) continue;
 
             const ethAmount = Number(tx.value) / 1e18;
-            const usdValue = ethAmount * 3500; // Mock ETH price
+            const usdValue = ethAmount * (rates.ETH || 3500);
             if (usdValue > 0) processDeposit(match.user_id, 'ETH', match.memo_code, usdValue, tx.hash);
         }
     } catch (e) {
@@ -200,7 +229,7 @@ async function checkETH() {
 // TRC (TRON) — via TronGrid (free)
 // ══════════════════════════════════════
 
-async function checkTRC() {
+async function checkTRC(rates = ratesCache) {
     const addr = ADMIN_WALLETS.TRC;
     if (!addr) return;
     const pending = getPending('TRC');
@@ -229,7 +258,7 @@ async function checkTRC() {
             // TRX value is in sun (1 TRX = 1e6 sun)  
             const contract = tx.raw_data?.contract?.[0];
             const trxAmount = Number(contract?.parameter?.value?.amount || 0) / 1e6;
-            const usdValue = trxAmount * 0.12; // Mock TRX price
+            const usdValue = trxAmount * (rates.TRC || 0.12);
             if (usdValue > 0) processDeposit(match.user_id, 'TRC', match.memo_code, usdValue, hash);
         }
     } catch (e) {
@@ -241,7 +270,7 @@ async function checkTRC() {
 // SOL — via Solana public RPC
 // ══════════════════════════════════════
 
-async function checkSOL() {
+async function checkSOL(rates = ratesCache) {
     const addr = ADMIN_WALLETS.SOL;
     if (!addr) return;
     const pending = getPending('SOL');
@@ -291,7 +320,7 @@ async function checkSOL() {
             const keys = txResult.transaction?.message?.accountKeys || [];
             const idx = keys.findIndex(k => (k.pubkey || k) === addr);
             const solDelta = idx >= 0 ? (post[idx] - pre[idx]) / 1e9 : 0;
-            const usdValue = solDelta * 140; // Mock SOL price
+            const usdValue = solDelta * (rates.SOL || 140);
             if (usdValue > 0) processDeposit(match.user_id, 'SOL', match.memo_code, usdValue, hash);
         }
     } catch (e) {
@@ -303,7 +332,7 @@ async function checkSOL() {
 // BTC — via Blockstream (free, no key)
 // ══════════════════════════════════════
 
-async function checkBTC() {
+async function checkBTC(rates = ratesCache) {
     const addr = ADMIN_WALLETS.BTC;
     if (!addr) return;
     const pending = getPending('BTC');
@@ -340,7 +369,7 @@ async function checkBTC() {
                     btcReceived += (vout.value || 0) / 1e8;
                 }
             }
-            const usdValue = btcReceived * 60000; // Mock BTC price
+            const usdValue = btcReceived * (rates.BTC || 60000);
             if (usdValue > 0) processDeposit(match.user_id, 'BTC', match.memo_code, usdValue, hash);
         }
     } catch (e) {
@@ -353,14 +382,15 @@ async function checkBTC() {
 // ══════════════════════════════════════
 
 async function pollAll() {
+    const rates = await getRates();
     await Promise.allSettled([
-        checkTON(),
-        checkBSC(),
-        checkBNB(),
-        checkETH(),
-        checkTRC(),
-        checkSOL(),
-        checkBTC(),
+        checkTON(rates),
+        checkBSC(rates),
+        checkBNB(rates),
+        checkETH(rates),
+        checkTRC(rates),
+        checkSOL(rates),
+        checkBTC(rates),
     ]);
 }
 

@@ -14,7 +14,7 @@ export async function fetchUsers(adminUserId: string): Promise<MockAppUser[]> {
 export async function updateUser(
   userId: string,
   adminUserId: string,
-  patch: { balance?: number; isBanned?: boolean; vipStatus?: boolean; notes?: string }
+  patch: { balance?: number; isBanned?: boolean; vipStatus?: boolean; notes?: string; botMode?: string }
 ): Promise<MockAppUser> {
   const res = await api.patch<{ user: MockAppUser }>(
     `/api/users/${encodeURIComponent(userId)}?userId=${encodeURIComponent(adminUserId)}`,
@@ -70,4 +70,48 @@ export async function downloadZyphexExportCsv(adminUserId: string): Promise<void
   a.download = 'zyphex_airdrop_export.csv';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+export type WithdrawalRequest = {
+  id: string;
+  userId: string;
+  userName: string;
+  network: string;
+  amount: number;
+  address: string;
+  status: string;
+  createdAt: string;
+  processedAt: string | null;
+};
+
+export async function fetchWithdrawalRequests(adminUserId: string, status?: string): Promise<WithdrawalRequest[]> {
+  const q = status ? `?userId=${encodeURIComponent(adminUserId)}&status=${encodeURIComponent(status)}` : `?userId=${encodeURIComponent(adminUserId)}`;
+  const res = await api.get<{ requests: WithdrawalRequest[] }>(`/api/admin/withdrawal-requests${q}`);
+  return res.requests || [];
+}
+
+export async function setWithdrawalRequestStatus(
+  requestId: string,
+  adminUserId: string,
+  status: 'approved' | 'rejected'
+): Promise<void> {
+  await api.patch(
+    `/api/admin/withdrawal-requests/${encodeURIComponent(requestId)}?userId=${encodeURIComponent(adminUserId)}`,
+    { status }
+  );
+}
+
+export type BroadcastItem = { id: string; text: string; audience: string; recipientCount: number; sentAt: string; createdAt: string };
+
+export async function fetchBroadcasts(adminUserId: string): Promise<BroadcastItem[]> {
+  const res = await api.get<{ broadcasts: BroadcastItem[] }>(`/api/admin/broadcasts?userId=${encodeURIComponent(adminUserId)}`);
+  return res.broadcasts || [];
+}
+
+export async function createBroadcast(adminUserId: string, message: string, audience: string): Promise<{ id: string; recipientCount: number }> {
+  return api.post(`/api/admin/broadcast?userId=${encodeURIComponent(adminUserId)}`, { message, audience });
+}
+
+export async function sendBroadcast(adminUserId: string, broadcastId: string): Promise<{ sent: number; failed: number }> {
+  return api.post(`/api/admin/broadcast/${encodeURIComponent(broadcastId)}/send?userId=${encodeURIComponent(adminUserId)}`, {});
 }
