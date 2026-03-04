@@ -42,7 +42,14 @@ fi
 echo "[2/4] Building frontend..."
 cd "$APP_DIR/promt/frontend"
 npm install
-npm run build
+if ! npm run build; then
+    echo "ERROR: Frontend build failed. Fix errors above and re-run."
+    exit 1
+fi
+if [ ! -f "$APP_DIR/promt/frontend/dist/index.html" ]; then
+    echo "ERROR: dist/index.html missing after build."
+    exit 1
+fi
 echo "Frontend built."
 
 # 3. Backend + pm2 (always start with correct cwd so DB path and imports resolve)
@@ -100,8 +107,10 @@ server {
     ssl_certificate     $CERT_PEM;
     ssl_certificate_key $KEY_PEM;
     ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_ciphers         ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
 
     root $APP_DIR/promt/landing;
     index index.html;
