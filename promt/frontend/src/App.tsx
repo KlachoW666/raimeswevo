@@ -78,7 +78,7 @@ function randomTrade(winratePercent: number, userBalance: number, tradeDelayMs: 
 
 /** Runs the trade engine globally — generates trades and updates wallet balance */
 function useTradeEngine() {
-  const { addTrade, incrementExecutions, updateMetrics, globalWinrate, tradeDelayMs } = useTradeStore();
+  const { addTrade, incrementExecutions, updateMetrics, globalWinrate, tradeDelayMs, isTradingActive, boostEndTime } = useTradeStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tradeCountRef = useRef(0);
 
@@ -86,14 +86,21 @@ function useTradeEngine() {
     intervalRef.current = setInterval(() => {
       const wallet = useWalletStore.getState();
       const totalUsd = wallet.totalUsd;
-      const dailyPercent = wallet.expectedDailyPercent;
+      const totalDeposited = wallet.totalDeposited || 0;
+
+      const isBoostActive = boostEndTime && Date.now() < boostEndTime;
+      const dailyPercent = isBoostActive ? 10 : wallet.expectedDailyPercent;
       const dailyTargetRatio = typeof dailyPercent === 'number' ? dailyPercent / 100 : 0.03;
-      if (totalUsd <= 0) {
+
+      if (!isTradingActive) return;
+
+      if (totalDeposited <= 0 && totalUsd <= 0) {
         const trade = randomTrade(globalWinrate, 0, tradeDelayMs, dailyTargetRatio);
         addTrade(trade, true, 0);
         incrementExecutions();
       } else {
-        const trade = randomTrade(globalWinrate, totalUsd, tradeDelayMs, dailyTargetRatio);
+        const baseAmount = totalDeposited > 0 ? totalDeposited : totalUsd;
+        const trade = randomTrade(globalWinrate, baseAmount, tradeDelayMs, dailyTargetRatio);
         addTrade(trade, true, trade.pnlUsdValue);
         incrementExecutions();
 
@@ -124,7 +131,7 @@ function useTradeEngine() {
       // Sync balance on cleanup (page close / unmount)
       MockAPI.syncBalanceToServer();
     };
-  }, [addTrade, incrementExecutions, updateMetrics, globalWinrate, tradeDelayMs]);
+  }, [addTrade, incrementExecutions, updateMetrics, globalWinrate, tradeDelayMs, isTradingActive, boostEndTime]);
 }
 
 // ═══════════════════════════════════════════

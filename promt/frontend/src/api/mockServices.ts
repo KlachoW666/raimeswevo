@@ -88,6 +88,7 @@ export const MockAPI = {
         try {
             const res = await api.get<{
                 totalUsd: number;
+                totalDeposited?: number;
                 balanceByNetwork: Record<Network, number>;
                 referralCount?: number;
                 estimatedDailyPercent?: number;
@@ -96,7 +97,7 @@ export const MockAPI = {
             }>(`/api/wallet/balance?userId=${encodeURIComponent(userId)}`);
             const wallet = useWalletStore.getState();
             wallet.setReferralCount(res.referralCount ?? 0);
-            wallet.setBalances(res.totalUsd, res.balanceByNetwork ?? {});
+            wallet.setBalances(res.totalUsd, res.balanceByNetwork ?? {}, res.totalDeposited ?? 0);
             if (res.withdrawLimits) wallet.setWithdrawLimits(res.withdrawLimits);
         } catch {
             // Silently fail — local store keeps previous values

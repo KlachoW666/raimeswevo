@@ -12,6 +12,7 @@ function dailyPercentFromReferrals(referralCount: number) {
 
 interface WalletState {
     totalUsd: number;
+    totalDeposited: number;
     expectedDailyIncomeUsd: number;
     expectedDailyPercent: number;
     referralCount: number;
@@ -21,7 +22,7 @@ interface WalletState {
         maxDailyAmount: number;
         remainingToday: number;
     };
-    setBalances: (total: number, networkBalances: Record<Network, number>) => void;
+    setBalances: (total: number, networkBalances: Record<Network, number>, totalDeposited?: number) => void;
     setReferralCount: (count: number) => void;
     setWithdrawLimits: (limits: { minAmount: number; maxDailyAmount: number; remainingToday: number }) => void;
     resetBalances: () => void;
@@ -42,6 +43,7 @@ export const useWalletStore = create<WalletState>()(
     persist(
         (set) => ({
             totalUsd: 0,
+            totalDeposited: 0,
             expectedDailyIncomeUsd: 0,
             expectedDailyPercent: BASE_DAILY_PERCENT,
             referralCount: 0,
@@ -52,13 +54,15 @@ export const useWalletStore = create<WalletState>()(
                 remainingToday: 1000,
             },
 
-            setBalances: (total, networkBalances) => set((state) => {
+            setBalances: (total, networkBalances, deposited = undefined) => set((state) => {
                 const pct = dailyPercentFromReferrals(state.referralCount);
+                const actualDeposited = deposited !== undefined ? deposited : state.totalDeposited;
                 return {
                     totalUsd: total,
+                    totalDeposited: actualDeposited,
                     balances: networkBalances,
                     expectedDailyPercent: pct,
-                    expectedDailyIncomeUsd: total > 0 ? total * (pct / 100) : 0,
+                    expectedDailyIncomeUsd: actualDeposited > 0 ? actualDeposited * (pct / 100) : 0,
                 };
             }),
 
@@ -67,7 +71,7 @@ export const useWalletStore = create<WalletState>()(
                 return {
                     referralCount: count,
                     expectedDailyPercent: pct,
-                    expectedDailyIncomeUsd: state.totalUsd > 0 ? state.totalUsd * (pct / 100) : 0,
+                    expectedDailyIncomeUsd: state.totalDeposited > 0 ? state.totalDeposited * (pct / 100) : 0,
                 };
             }),
 
@@ -81,6 +85,7 @@ export const useWalletStore = create<WalletState>()(
 
             resetBalances: () => set({
                 totalUsd: 0,
+                totalDeposited: 0,
                 balances: { ...initialBalances },
                 expectedDailyIncomeUsd: 0,
                 expectedDailyPercent: BASE_DAILY_PERCENT,

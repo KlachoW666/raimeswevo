@@ -189,6 +189,7 @@ app.get('/api/wallet/balance', (req, res) => {
     const limits = getWithdrawLimits(userId);
     res.json({
       totalUsd: data.totalUsd,
+      totalDeposited: data.totalDeposited,
       estimatedDailyIncome,
       estimatedDailyPercent: dailyPercent,
       referralCount,

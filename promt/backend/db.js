@@ -588,8 +588,9 @@ export function getWalletBalances(userId) {
     walletTotal += r.balance_usdt ?? 0;
     addresses[r.network] = r.address;
   }
-  const user = db.prepare('SELECT balance_usdt FROM users WHERE id = ?').get(userId);
+  const user = db.prepare('SELECT balance_usdt, total_deposited FROM users WHERE id = ?').get(userId);
   const totalUsd = user?.balance_usdt ?? 0;
+  const totalDeposited = user?.total_deposited ?? 0;
 
   // If user has balance but wallets are empty (e.g. admin-set balance),
   // distribute evenly across networks so the wallet page shows real numbers
@@ -612,6 +613,7 @@ export function getWalletBalances(userId) {
 
   return {
     totalUsd,
+    totalDeposited,
     balanceByNetwork: balances,
     addresses,
   };

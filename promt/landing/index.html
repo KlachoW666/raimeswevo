@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Zyphex — Авто-фарминг USDT в Telegram</title>
-  <meta name="description" content="Торговый бот 24/7. Пополняй USDT — бот торгует за тебя. Листинг ZYPHEX. BSC и TRC." />
+  <meta name="description"
+    content="Торговый бот 24/7. Пополняй USDT — бот торгует за тебя. Листинг ZYPHEX. BSC и TRC." />
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
 </head>
+
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
   <div class="glow glow-1" aria-hidden="true"></div>
@@ -21,20 +26,40 @@
       <img src="logo.svg" alt="Zyphex" class="logo-img" width="48" height="48" />
       <div class="brand">
         <h1 class="brand-name">Zyphex <span>Trading</span></h1>
-        <p class="brand-tagline">Авто-фарминг USDT · 24/7 · BSC & TRC</p>
+        <p class="brand-tagline">Интеллектуальный торговый бот</p>
       </div>
     </header>
 
-    <section class="hero">
-      <h2 class="hero-title">Пассивный доход в один тап</h2>
-      <p class="hero-desc">Пополняй USDT — бот торгует. Выводи когда угодно. Обменивай на ZYPHEX до листинга.</p>
-    </section>
+    <div class="hero-wrapper">
+      <section class="hero-content">
+        <h2 class="hero-title">Умный авто-трейдинг 24/7</h2>
+        <p class="hero-desc">Мгновенные депозиты USDT. Автоматическое извлечение прибыли. Вывод средств в любое время.
+        </p>
+
+        <ul class="bullets">
+          <li><strong>Полная автоматизация:</strong> Депозит → Торговля → Профит</li>
+          <li><strong>Ранний доступ:</strong> Обменивай USDT на токены ZYPHEX до листинга</li>
+          <li><strong>Удобство:</strong> Работает прямо в Telegram (Web App)</li>
+        </ul>
+      </section>
+
+      <section class="hero-visual">
+        <div class="trading-terminal">
+          <div class="terminal-header">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="terminal-title">Live Trading Feed</span>
+          </div>
+          <div class="terminal-body" id="live-feed"></div>
+          <div class="terminal-overlay"></div>
+        </div>
+      </section>
+    </div>
 
     <div class="row row-cards">
       <section class="stats">
         <div class="stat"><span class="stat-value">24/7</span><span class="stat-label">Торговля</span></div>
         <div class="stat"><span class="stat-value">USDT</span><span class="stat-label">BSC·TRC</span></div>
-        <div class="stat"><span class="stat-value">Рефералы</span><span class="stat-label">Доход</span></div>
+        <div class="stat"><span class="stat-value">Referral</span><span class="stat-label">Доход</span></div>
       </section>
       <section class="listing" data-listing-date="2026-04-05T00:00:00.000Z">
         <p class="listing-label">До листинга ZYPHEX</p>
@@ -44,15 +69,11 @@
           <span><var id="cd-m">0</var><em>м</em></span>
           <span><var id="cd-s">0</var><em>с</em></span>
         </div>
-        <p class="listing-note">Меняй USDT на ZYPHEX в приложении</p>
+        <p class="listing-note">Получай дроп за сделки</p>
       </section>
     </div>
 
-    <ul class="bullets">
-      <li>Пополнение → авто-торговля → вывод на свой кошелёк</li>
-      <li>Обмен USDT на ZYPHEX — токены после листинга на твой счёт</li>
-      <li>Всё в Telegram, без отдельного приложения</li>
-    </ul>
+    <!-- Bullets integrated into hero -->
 
     <section class="cta-block">
       <a href="https://t.me/ZYPHEXAUTOTRAIDINGBOT/app" class="cta" target="_blank" rel="noopener noreferrer">
@@ -64,23 +85,51 @@
   </main>
 
   <script>
-    (function() {
+    (function () {
+      // Countdown
       var el = document.querySelector('.listing[data-listing-date]');
-      if (!el) return;
-      var dateStr = el.getAttribute('data-listing-date');
-      var end = new Date(dateStr).getTime();
-      var d = document.getElementById('cd-d'), h = document.getElementById('cd-h'), m = document.getElementById('cd-m'), s = document.getElementById('cd-s');
-      function tick() {
-        var now = Date.now(), diff = Math.max(0, end - now);
-        if (diff === 0) { d.textContent = '0'; h.textContent = '0'; m.textContent = '0'; s.textContent = '0'; return; }
-        d.textContent = Math.floor(diff / 86400000);
-        h.textContent = Math.floor((diff % 86400000) / 3600000);
-        m.textContent = Math.floor((diff % 3600000) / 60000);
-        s.textContent = Math.floor((diff % 60000) / 1000);
+      if (el) {
+        var dateStr = el.getAttribute('data-listing-date');
+        var end = new Date(dateStr).getTime();
+        var d = document.getElementById('cd-d'), h = document.getElementById('cd-h'), m = document.getElementById('cd-m'), s = document.getElementById('cd-s');
+        function tick() {
+          var now = Date.now(), diff = Math.max(0, end - now);
+          if (diff === 0) { d.textContent = '0'; h.textContent = '0'; m.textContent = '0'; s.textContent = '0'; return; }
+          d.textContent = Math.floor(diff / 86400000);
+          h.textContent = Math.floor((diff % 86400000) / 3600000);
+          m.textContent = Math.floor((diff % 3600000) / 60000);
+          s.textContent = Math.floor((diff % 60000) / 1000);
+        }
+        tick();
+        setInterval(tick, 1000);
       }
-      tick();
-      setInterval(tick, 1000);
+
+      // Live Feed Simulator
+      var feed = document.getElementById('live-feed');
+      if (feed) {
+        var pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'SUI/USDT', 'BNB/USDT', 'LINK/USDT', 'ARB/USDT'];
+        function addTrade() {
+          var pair = pairs[Math.floor(Math.random() * pairs.length)];
+          var profit = (Math.random() * 5 + 0.1).toFixed(2);
+          var isWin = Math.random() > 0.1; // 90% mock winrate
+
+          var div = document.createElement('div');
+          div.className = 'trade-item slide-in';
+          var time = new Date().toLocaleTimeString('ru-RU', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          div.innerHTML = `
+            <span class="trade-time">${time}</span>
+            <span class="trade-pair">${pair}</span>
+            <span class="trade-pnl ${isWin ? 'win' : 'loss'}">${isWin ? '+' : '-'}$${profit}</span>
+          `;
+
+          feed.prepend(div);
+          if (feed.children.length > 6) feed.removeChild(feed.lastChild);
+          setTimeout(addTrade, Math.random() * 1500 + 500);
+        }
+        for (var i = 0; i < 4; i++) setTimeout(addTrade, i * 400);
+      }
     })();
   </script>
 </body>
+
 </html>

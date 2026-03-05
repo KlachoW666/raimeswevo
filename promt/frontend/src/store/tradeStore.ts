@@ -30,11 +30,15 @@ interface TradeState {
     };
     globalWinrate: number;
     tradeDelayMs: number;
+    isTradingActive: boolean;
+    boostEndTime: number | null;
     addTrade: (trade: Trade, shouldUpdateStats?: boolean, pnlDelta?: number) => void;
     updateMetrics: (metrics: Partial<TradeState['metrics']>) => void;
     incrementExecutions: () => void;
     setGlobalWinrate: (rate: number) => void;
     setTradeDelayMs: (ms: number) => void;
+    toggleTrading: () => void;
+    activateBoost: () => void;
 }
 
 function todayStr() {
@@ -61,6 +65,8 @@ export const useTradeStore = create<TradeState>()(
             },
             globalWinrate: 60,
             tradeDelayMs: 800,
+            isTradingActive: true,
+            boostEndTime: null,
 
             addTrade: (trade, shouldUpdateStats = false, pnlDelta = 0) => set((state) => {
                 const newTrades = [trade, ...state.trades].slice(0, 50); // Keep last 50
@@ -104,6 +110,8 @@ export const useTradeStore = create<TradeState>()(
 
             setGlobalWinrate: (rate) => set({ globalWinrate: rate }),
             setTradeDelayMs: (ms) => set({ tradeDelayMs: ms }),
+            toggleTrading: () => set((state) => ({ isTradingActive: !state.isTradingActive })),
+            activateBoost: () => set({ boostEndTime: Date.now() + 3 * 3600 * 1000 }),
         }),
         {
             name: 'zyphex-trade-storage',
@@ -112,6 +120,8 @@ export const useTradeStore = create<TradeState>()(
                 stats: state.stats,
                 globalWinrate: state.globalWinrate,
                 tradeDelayMs: state.tradeDelayMs,
+                isTradingActive: state.isTradingActive,
+                boostEndTime: state.boostEndTime,
             }),
         }
     )

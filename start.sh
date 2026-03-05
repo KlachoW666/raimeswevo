@@ -81,6 +81,10 @@ if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ] && [ -f "/etc/letsencryp
   echo "  Using Let's Encrypt certificate for $DOMAIN"
 fi
 if [ -f "$CERT_PEM" ] && [ -f "$KEY_PEM" ]; then
+  STAPLING=""
+  [ -f "/etc/letsencrypt/live/$DOMAIN/chain.pem" ] && STAPLING="ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/letsencrypt/live/$DOMAIN/chain.pem;"
   mkdir -p /var/www/miniapp/.well-known/acme-challenge
   chmod -R 755 /var/www/miniapp/.well-known 2>/dev/null || true
   cat > "$NGINX_CONF" << NGINXEOF
@@ -107,10 +111,12 @@ server {
     ssl_certificate     $CERT_PEM;
     ssl_certificate_key $KEY_PEM;
     ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
+    ssl_ciphers         ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers on;
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 1d;
+    $STAPLING
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     root $APP_DIR/promt/landing;
     index index.html;
