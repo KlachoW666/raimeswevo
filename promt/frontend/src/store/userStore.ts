@@ -47,6 +47,14 @@ export const useUserStore = create<UserState>()(
         }),
         {
             name: 'wevox-user-storage',
+            partialize: (state) => ({
+                isAuthenticated: state.isAuthenticated,
+                pin: state.pin,
+                userId: state.userId,
+                botMode: state.botMode,
+                language: state.language,
+                isAdmin: state.isAdmin,
+            }),
         }
     )
 );

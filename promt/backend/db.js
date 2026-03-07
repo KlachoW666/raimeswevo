@@ -285,11 +285,12 @@ export function registerUser({ telegramId, username, firstName, pin, referredBy 
   if (userExists(telegramId)) return null;
 
   const pinHash = hashPin(pin);
+  const referredByNormalized = referredBy ? String(referredBy).trim().toUpperCase() : null;
 
   db.prepare(`
     INSERT INTO users (id, telegram_id, username, first_name, ref_code, referred_by_ref_code, pin_hash, balance_usdt)
     VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-  `).run(id, String(telegramId), username || '', firstName || '', refCode, referredBy || null, pinHash);
+  `).run(id, String(telegramId), username || '', firstName || '', refCode, referredByNormalized, pinHash);
 
   // Create wallets for all networks
   const networks = ['TON', 'BSC', 'BNB', 'TRC', 'SOL', 'BTC', 'ETH'];
@@ -303,8 +304,8 @@ export function registerUser({ telegramId, username, firstName, pin, referredBy 
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
 
-  if (referredBy) {
-    const referrer = db.prepare('SELECT id FROM users WHERE ref_code = ?').get(referredBy);
+  if (referredByNormalized) {
+    const referrer = db.prepare('SELECT id FROM users WHERE ref_code = ?').get(referredByNormalized);
     if (referrer) {
       db.prepare('UPDATE users SET referral_count = referral_count + 1 WHERE id = ?').run(referrer.id);
     }

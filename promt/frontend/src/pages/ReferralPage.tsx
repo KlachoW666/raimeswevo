@@ -1,19 +1,24 @@
 import { Users, Copy, Gift, CheckCircle2 } from 'lucide-react';
 import { useUserStore, generateRefCode } from '../store/userStore';
 import { useTelegram } from '../hooks/useTelegram';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
-
-import { CONFIG } from '../config';
+import { MockAPI } from '../api/mockServices';
 
 export default function ReferralPage() {
     const { userId, referredBy } = useUserStore();
-    const refCode = generateRefCode(userId);
+    const localRefCode = generateRefCode(userId);
     const { hapticFeedback } = useTelegram();
     const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
+    const [refInfo, setRefInfo] = useState<{ refCode: string; refLink: string; invitedCount: number; totalEarned: number } | null>(null);
 
-    const refLink = `https://t.me/${CONFIG.BOT_USERNAME}/app?startapp=${refCode}`;
+    useEffect(() => {
+        MockAPI.getReferralInfo().then(setRefInfo);
+    }, []);
+
+    const refCode = refInfo?.refCode ?? localRefCode;
+    const refLink = refInfo?.refLink ?? `https://t.me/wevoautobot/app?startapp=${localRefCode}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(refLink);
@@ -65,7 +70,7 @@ export default function ReferralPage() {
                     <div className="w-9 h-9 rounded-xl bg-[#60A5FA]/10 flex items-center justify-center mb-3">
                         <Users size={16} className="text-[#60A5FA]" />
                     </div>
-                    <div className="text-2xl font-bold font-mono text-[#F8FAFC] mb-1">0</div>
+                    <div className="text-2xl font-bold font-mono text-[#F8FAFC] mb-1">{refInfo?.invitedCount ?? 0}</div>
                     <div className="text-[10px] text-[#64748B] uppercase font-bold leading-tight">{t('referral.invited')}</div>
                     <div className="text-[10px] text-[#64748B] mt-1 opacity-70">{t('referral.clickedLink')}</div>
                 </div>
@@ -74,7 +79,7 @@ export default function ReferralPage() {
                     <div className="w-9 h-9 rounded-xl bg-[#00E676]/10 flex items-center justify-center mb-3">
                         <Gift size={16} className="text-[#00E676]" />
                     </div>
-                    <div className="text-2xl font-bold font-mono text-[#00E676] mb-1 text-shadow-green">+$0.00</div>
+                    <div className="text-2xl font-bold font-mono text-[#00E676] mb-1 text-shadow-green">+${(refInfo?.totalEarned ?? 0).toFixed(2)}</div>
                     <div className="text-[10px] text-[#64748B] uppercase font-bold leading-tight">{t('referral.earned')}</div>
                     <div className="text-[10px] text-[#64748B] mt-1 opacity-70">{t('referral.fromDeposits')}</div>
                 </div>

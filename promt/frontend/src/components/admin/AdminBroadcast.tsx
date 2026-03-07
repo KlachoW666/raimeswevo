@@ -28,14 +28,21 @@ export default function AdminBroadcast() {
         try {
             const { id, recipientCount } = await createBroadcast(adminUserId, message.trim(), audience);
             addAuditEntry({ adminId: adminUserId, action: 'Массовая рассылка', details: `${recipientCount} получателей · "${message.slice(0, 50)}..."` });
-            await sendBroadcast(adminUserId, id);
-            hapticFeedback?.notificationOccurred('success');
-            if (showAlert) showAlert(`Рассылка отправлена: ${recipientCount} пользователям`);
+            const result = await sendBroadcast(adminUserId, id);
+            hapticFeedback?.notificationOccurred(result.failed === 0 ? 'success' : 'warning');
+            if (result.failed === 0) {
+                if (showAlert) showAlert(`Отправлено: ${result.sent} из ${recipientCount}`);
+            } else {
+                const detail = result.errorDetail || 'Не удалось доставить части сообщений.';
+                if (showAlert) showAlert(`Доставлено: ${result.sent}, не доставлено: ${result.failed}. ${detail}`);
+            }
             setMessage('');
             const list = await fetchBroadcasts(adminUserId);
             setBroadcasts(list);
-        } catch {
-            if (showAlert) showAlert('Ошибка при отправке рассылки');
+        } catch (e: unknown) {
+            const err = e instanceof Error ? e : null;
+            const msg = err?.message || 'Ошибка при отправке рассылки';
+            if (showAlert) showAlert(msg.includes('TELEGRAM_BOT_TOKEN') ? 'Добавьте TELEGRAM_BOT_TOKEN в promt/backend/.env и перезапустите backend' : msg);
         } finally {
             setSending(false);
         }

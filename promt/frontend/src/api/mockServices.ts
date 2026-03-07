@@ -80,6 +80,25 @@ export const MockAPI = {
         useUserStore.getState().logout();
     },
 
+    /** Referral info: refCode, refLink, invitedCount, totalEarned */
+    async getReferralInfo(): Promise<{ refCode: string; refLink: string; invitedCount: number; totalEarned: number } | null> {
+        const userId = useUserStore.getState().userId;
+        if (!userId) return null;
+        try {
+            const res = await api.get<{ refCode: string; refLink: string; invitedCount?: number; totalEarned?: number }>(
+                `/api/referral/info?userId=${encodeURIComponent(userId)}`
+            );
+            return {
+                refCode: res.refCode ?? '',
+                refLink: res.refLink ?? '',
+                invitedCount: res.invitedCount ?? 0,
+                totalEarned: res.totalEarned ?? 0,
+            };
+        } catch {
+            return null;
+        }
+    },
+
     // --- WALLET ---
     /** Fetch balance from backend — server is source of truth so admin changes (bonus, set balance, reset) are always visible. */
     async fetchBalance(): Promise<void> {

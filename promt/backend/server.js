@@ -1,9 +1,13 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '.env') });
+
 import express from 'express';
 import cors from 'cors';
 import { mkdirSync, existsSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
 import {
   userExists,
   registerUser,
@@ -53,7 +57,6 @@ import {
 import { startMonitoring } from './depositMonitor.js';
 import axios from 'axios';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, 'data');
 if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 
@@ -639,11 +642,15 @@ function delay(ms) {
 async function sendBroadcastViaTelegram(broadcastId) {
   const b = getBroadcastById(broadcastId);
   if (!b || b.sent_at) return { sent: 0, failed: 0 };
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return { sent: 0, failed: 0, error: 'TELEGRAM_BOT_TOKEN not set' };
+  const token = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+  if (!token) {
+    console.error('[broadcast] TELEGRAM_BOT_TOKEN is empty. Put it in promt/backend/.env');
+    return { sent: 0, failed: 0, error: 'TELEGRAM_BOT_TOKEN not set. Add to promt/backend/.env and restart.' };
+  }
   const telegramIds = getTelegramIdsForAudience(b.audience);
   let sent = 0;
   let failedIds = [];
+  let firstErrorDescription = null;
   for (const chatId of telegramIds) {
     try {
       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -654,7 +661,9 @@ async function sendBroadcastViaTelegram(broadcastId) {
       sent++;
     } catch (err) {
       failedIds.push(chatId);
-      console.error(`[broadcast ${broadcastId}] send failed for chat_id=${chatId}:`, err.response?.data?.description || err.message);
+      const desc = err.response?.data?.description || err.message;
+      if (!firstErrorDescription) firstErrorDescription = desc;
+      console.error(`[broadcast ${broadcastId}] send failed for chat_id=${chatId}:`, desc, err.response?.data ? JSON.stringify(err.response.data) : '');
     }
   }
   for (let attempt = 0; attempt < BROADCAST_RETRY_ATTEMPTS && failedIds.length > 0; attempt++) {
@@ -680,7 +689,9 @@ async function sendBroadcastViaTelegram(broadcastId) {
   if (failed === 0) {
     markBroadcastSent(broadcastId);
   }
-  return { sent, failed };
+  const result = { sent, failed };
+  if (failed > 0 && firstErrorDescription) result.errorDetail = firstErrorDescription;
+  return result;
 }
 
 app.post('/api/admin/broadcast/:id/send', async (req, res) => {
@@ -803,6 +814,48 @@ app.get('/api/admin/zyphex/export', (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ══════════════════════════════════════
+// Telegram Bot: webhook for /start and other commands
+// Set webhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://wevox.ru/api/telegram-webhook
+// ══════════════════════════════════════
+
+const WELCOME_MESSAGE = `🟢 <b>WEVOX Auto</b> — это мини-приложение для автоматической торговли в Telegram.
+
+<b>Что это?</b>
+• Симуляция трейдинга с виртуальным балансом в USDT
+• Заработанный USDT можно обменять на токены <b>WEVOX</b> в разделе «Обмен»
+• Реферальная программа: приглашайте друзей по ссылке и получайте бонус к дневному доходу
+• Промокоды: вводите коды в разделе «Обмен» и получайте WEVOX бесплатно
+
+<b>Как начать?</b>
+Нажмите кнопку ниже — откроется приложение. При первом входе создайте PIN-код (4–6 цифр). После этого вам будет доступен баланс, сделки и обмен на WEVOX.
+
+<b>Безопасность:</b>
+Все данные хранятся на защищённом сервере. Вывод средств (если включён) возможен только на привязанные кошельки.
+
+👉 <b>Открыть приложение</b> — нажмите кнопку «Открыть» в меню бота или перейдите по ссылке в описании.`;
+
+app.post('/api/telegram-webhook', (req, res) => {
+  res.status(200).send();
+  const token = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+  if (!token) return;
+  const body = req.body || {};
+  const message = body.message;
+  if (!message?.chat?.id) return;
+  const chatId = message.chat.id;
+  const text = (message.text || '').trim();
+  if (text === '/start') {
+    const payload = {
+      chat_id: chatId,
+      text: WELCOME_MESSAGE,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    };
+    axios.post(`https://api.telegram.org/bot${token}/sendMessage`, payload, { timeout: 8000 })
+      .catch((err) => console.error('[telegram-webhook] sendMessage failed:', err.response?.data?.description || err.message));
   }
 });
 

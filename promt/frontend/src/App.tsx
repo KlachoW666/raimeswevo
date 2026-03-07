@@ -161,8 +161,18 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+const START_PARAM_REGEX = /^[\w-]{1,512}$/;
+
 function App() {
   const { isAuthenticated } = useUserStore();
+
+  // Fallback: read Telegram start_param (ref link) when app is ready — in case it wasn't available at bootstrap
+  useEffect(() => {
+    const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+    if (typeof startParam === 'string' && START_PARAM_REGEX.test(startParam)) {
+      useUserStore.getState().setReferredBy(startParam.trim().toUpperCase());
+    }
+  }, []);
 
   // Run trade engine globally (works on ANY page, not just HomePage)
   useTradeEngine();

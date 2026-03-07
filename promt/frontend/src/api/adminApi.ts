@@ -140,6 +140,6 @@ export async function createBroadcast(adminUserId: string, message: string, audi
   return api.post(`/api/admin/broadcast?userId=${encodeURIComponent(adminUserId)}`, { message, audience });
 }
 
-export async function sendBroadcast(adminUserId: string, broadcastId: string): Promise<{ sent: number; failed: number }> {
+export async function sendBroadcast(adminUserId: string, broadcastId: string): Promise<{ sent: number; failed: number; errorDetail?: string }> {
   return api.post(`/api/admin/broadcast/${encodeURIComponent(broadcastId)}/send?userId=${encodeURIComponent(adminUserId)}`, {});
 }

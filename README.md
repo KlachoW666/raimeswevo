@@ -33,6 +33,18 @@ Telegram Web App для авто-трейдинга: пополнение USDT, 
 
 4. В BotFather укажите URL Mini App: **https://wevox.ru/miniapp**
 
+**Бот и рассылки:** создайте файл `promt/backend/.env` и добавьте строку:
+   ```
+   TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+   ```
+   (токен из @BotFather). После перезапуска backend (pm2 restart wevox-api) рассылки из админки будут работать. Если рассылка выдаёт ошибку — в ответе API приходит поле `errorDetail` (например: «bot can't initiate conversation» значит пользователь ещё не нажал /start у бота).
+
+**Команда /start у бота:** чтобы при нажатии /start бот присылал приветствие, нужно один раз настроить webhook (подставьте свой домен и токен):
+   ```
+   curl "https://api.telegram.org/bot<ВАШ_ТОКЕН>/setWebhook?url=https://wevox.ru/api/telegram-webhook"
+   ```
+   Убедитесь, что в Nginx проксируется не только `/api/`, но и именно этот путь; при необходимости добавьте в конфиг location для `/api/telegram-webhook`. После этого при отправке /start бот будет отвечать информацией о приложении.
+
 **Важно:** В GitHub у репозитория должна быть ветка **main** (install.sh делает `git pull` / `git reset --hard origin/main`). Если используете другую ветку, измените в install.sh `origin/main` на нужную.
 
 **Проверка API после деплоя:** из корня репозитория выполните `cd promt/backend && npm run check-api`. Для продакшена задайте `BASE_URL=https://wevox.ru` (или ваш домен). При необходимости укажите `USER_ID` и `ADMIN_USER_ID` для проверки эндпоинтов с авторизацией.
