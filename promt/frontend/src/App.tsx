@@ -223,10 +223,23 @@ const START_PARAM_REGEX = /^[\w-]{1,512}$/;
 
 function App() {
   const { isAuthenticated } = useUserStore();
+  const [apiUnavailable, setApiUnavailable] = useState<boolean | null>(null);
 
   // Скрыть спиннер Telegram только после того, как наше приложение смонтировалось и отрисовалось
   useEffect(() => {
     try { window.Telegram?.WebApp?.ready(); } catch { /* ignore */ }
+  }, []);
+
+  // Проверка доступности API: если через 8 сек нет ответа — показываем «Сервер недоступен»
+  useEffect(() => {
+    const base = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
+    const url = `${base}/api/health`;
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 8000);
+    fetch(url, { signal: controller.signal })
+      .then((r) => { clearTimeout(t); if (!r.ok) setApiUnavailable(true); })
+      .catch(() => { clearTimeout(t); setApiUnavailable(true); });
+    return () => { clearTimeout(t); controller.abort(); };
   }, []);
 
   // Fallback: read Telegram start_param (ref link) when app is ready — in case it wasn't available at bootstrap
@@ -263,6 +276,16 @@ function App() {
       MockAPI.fetchBalance();
     }
   }, [validateSession, isAuthenticated]);
+
+  if (apiUnavailable === true) {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)', color: '#F8FAFC', fontFamily: 'system-ui, sans-serif', textAlign: 'center' }}>
+        <p style={{ marginBottom: 8, color: '#94A3B8' }}>Сервер недоступен</p>
+        <p style={{ marginBottom: 20, fontSize: 14, color: '#64748B' }}>Проверьте интернет или попробуйте позже</p>
+        <button type="button" onClick={() => window.location.reload()} style={{ padding: '12px 24px', background: '#00E676', color: '#000', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}>Обновить</button>
+      </div>
+    );
+  }
 
   return (
     <AppErrorBoundary>

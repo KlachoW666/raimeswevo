@@ -19,6 +19,9 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
     const [onlyRegistered, setOnlyRegistered] = useState(false);
     const [selectedUser, setSelectedUser] = useState<MockAppUser | null>(null);
     const [loading, setLoading] = useState(false);
+    type PromptType = 'balance' | 'bonus' | 'notes' | null;
+    const [promptState, setPromptState] = useState<{ type: PromptType; title: string; placeholder: string; current: string } | null>(null);
+    const [promptInput, setPromptInput] = useState('');
 
     useEffect(() => {
         if (isOpen && adminUserId) {
@@ -45,40 +48,60 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
         if (u) setSelectedUser(u);
     };
 
-    const handleUpdateBalance = async () => {
+    const handleUpdateBalance = () => {
         if (!selectedUser || !adminUserId) return;
         hapticFeedback?.impactOccurred('medium');
-        const input = window.prompt(`Новый баланс для ${selectedUser.name}:`, selectedUser.balance.toString());
-        if (input !== null) {
-            const val = parseFloat(input);
-            if (!isNaN(val) && val >= 0) {
-                try {
-                    await updateUserApi(selectedUser.id, adminUserId, { balance: val });
-                    addAuditEntry({ adminId: adminUserId, action: 'Изменение баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $${val}` });
-                    await refetchAndRefresh(selectedUser.id);
-                    if (showAlert) showAlert(`Баланс обновлен до $${val.toFixed(2)}`);
-                } catch (e: any) {
-                    if (showAlert) showAlert(e?.message || 'Ошибка сети');
-                }
-            }
-        }
+        const current = selectedUser.balance.toString();
+        setPromptInput(current);
+        setPromptState({ type: 'balance', title: `Новый баланс для ${selectedUser.name}`, placeholder: '0', current });
     };
 
-    const handleAddBonus = async () => {
+    const handleAddBonus = () => {
         if (!selectedUser || !adminUserId) return;
         hapticFeedback?.impactOccurred('medium');
-        const input = window.prompt(`Бонус для ${selectedUser.name}:`, '100');
-        if (input !== null) {
-            const val = parseFloat(input);
-            if (!isNaN(val) && val > 0) {
-                try {
-                    await addBonus(selectedUser.id, adminUserId, val);
-                    addAuditEntry({ adminId: adminUserId, action: 'Бонус', details: `${selectedUser.name}: +$${val}` });
-                    await refetchAndRefresh(selectedUser.id);
-                    if (showAlert) showAlert(`Бонус +$${val.toFixed(2)} начислен`);
-                } catch (e: any) {
-                    if (showAlert) showAlert(e?.message || 'Ошибка сети');
-                }
+        setPromptInput('100');
+        setPromptState({ type: 'bonus', title: `Бонус для ${selectedUser.name}`, placeholder: '100', current: '100' });
+    };
+
+    const submitPrompt = async (inputValue: string) => {
+        if (!selectedUser || !adminUserId || !promptState) return;
+        const { type } = promptState;
+        setPromptState(null);
+        if (type === 'balance') {
+            const val = parseFloat(inputValue.replace(',', '.'));
+            if (isNaN(val) || val < 0) {
+                if (showAlert) showAlert('Введите число ≥ 0');
+                return;
+            }
+            try {
+                await updateUserApi(selectedUser.id, adminUserId, { balance: val });
+                addAuditEntry({ adminId: adminUserId, action: 'Изменение баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $${val}` });
+                await refetchAndRefresh(selectedUser.id);
+                if (showAlert) showAlert(`Баланс обновлен до $${val.toFixed(2)}`);
+            } catch (e: any) {
+                if (showAlert) showAlert(e?.message || 'Ошибка сети');
+            }
+        } else if (type === 'bonus') {
+            const val = parseFloat(inputValue.replace(',', '.'));
+            if (isNaN(val) || val <= 0) {
+                if (showAlert) showAlert('Введите положительное число');
+                return;
+            }
+            try {
+                await addBonus(selectedUser.id, adminUserId, val);
+                addAuditEntry({ adminId: adminUserId, action: 'Бонус', details: `${selectedUser.name}: +$${val}` });
+                await refetchAndRefresh(selectedUser.id);
+                if (showAlert) showAlert(`Бонус +$${val.toFixed(2)} начислен`);
+            } catch (e: any) {
+                if (showAlert) showAlert(e?.message || 'Ошибка сети');
+            }
+        } else if (type === 'notes') {
+            try {
+                await updateUserApi(selectedUser.id, adminUserId, { notes: inputValue });
+                addAuditEntry({ adminId: adminUserId, action: 'Заметка', details: `${selectedUser.name}: "${inputValue.slice(0, 50)}"` });
+                await refetchAndRefresh(selectedUser.id);
+            } catch (e: any) {
+                if (showAlert) showAlert(e?.message || 'Ошибка сети');
             }
         }
     };
@@ -109,32 +132,29 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
         }
     };
 
-    const handleUpdateNotes = async () => {
+    const handleUpdateNotes = () => {
         if (!selectedUser || !adminUserId) return;
-        const input = window.prompt('Заметка:', selectedUser.notes);
-        if (input !== null) {
-            try {
-                await updateUserApi(selectedUser.id, adminUserId, { notes: input });
-                addAuditEntry({ adminId: adminUserId, action: 'Заметка', details: `${selectedUser.name}: "${input.slice(0, 50)}"` });
-                await refetchAndRefresh(selectedUser.id);
-            } catch (e: any) {
-                if (showAlert) showAlert(e?.message || 'Ошибка сети');
-            }
-        }
+        const current = selectedUser.notes || '';
+        setPromptInput(current);
+        setPromptState({ type: 'notes', title: 'Заметка', placeholder: 'Текст...', current });
     };
 
-    const handleResetBalance = async () => {
+    const [confirmReset, setConfirmReset] = useState(false);
+    const handleResetBalance = () => {
         if (!selectedUser || !adminUserId) return;
-        if (window.confirm(`Сбросить баланс ${selectedUser.name} до $0?`)) {
-            hapticFeedback?.notificationOccurred('warning');
-            try {
-                await resetBalance(selectedUser.id, adminUserId);
-                addAuditEntry({ adminId: adminUserId, action: 'Сброс баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $0` });
-                await refetchAndRefresh(selectedUser.id);
-                if (showAlert) showAlert('Баланс обнулен');
-            } catch (e: any) {
-                if (showAlert) showAlert(e?.message || 'Ошибка сети');
-            }
+        setConfirmReset(true);
+    };
+    const doResetBalance = async () => {
+        if (!selectedUser || !adminUserId) return;
+        setConfirmReset(false);
+        hapticFeedback?.notificationOccurred('warning');
+        try {
+            await resetBalance(selectedUser.id, adminUserId);
+            addAuditEntry({ adminId: adminUserId, action: 'Сброс баланса', details: `${selectedUser.name}: $${selectedUser.balance} → $0` });
+            await refetchAndRefresh(selectedUser.id);
+            if (showAlert) showAlert('Баланс обнулен');
+        } catch (e: any) {
+            if (showAlert) showAlert(e?.message || 'Ошибка сети');
         }
     };
 
@@ -312,6 +332,41 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                     </div>
                 )}
             </div>
+
+            {/* Модалка ввода (вместо prompt — работает на телефоне) */}
+            {promptState && (
+                <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60" onClick={() => setPromptState(null)}>
+                    <div className="w-full max-w-sm bg-[#161B22] border border-[#30363D] rounded-2xl p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-[15px] font-bold text-white mb-3">{promptState.title}</h3>
+                        <input
+                            type={promptState.type === 'notes' ? 'text' : 'number'}
+                            inputMode={promptState.type === 'notes' ? 'text' : 'decimal'}
+                            value={promptInput}
+                            onChange={e => setPromptInput(e.target.value)}
+                            placeholder={promptState.placeholder}
+                            className="w-full px-4 py-3 rounded-xl bg-[#0D1117] border border-[#30363D] text-white text-base mb-4"
+                            autoFocus
+                        />
+                        <div className="flex gap-2">
+                            <button type="button" onClick={() => setPromptState(null)} className="flex-1 py-2.5 rounded-xl bg-[#30363D] text-white font-semibold">Отмена</button>
+                            <button type="button" onClick={() => submitPrompt(promptInput)} className="flex-1 py-2.5 rounded-xl bg-[#00E676] text-black font-semibold">Сохранить</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Подтверждение сброса баланса */}
+            {confirmReset && selectedUser && (
+                <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60" onClick={() => setConfirmReset(false)}>
+                    <div className="w-full max-w-sm bg-[#161B22] border border-[#30363D] rounded-2xl p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <p className="text-white mb-4">Сбросить баланс {selectedUser.name} до $0?</p>
+                        <div className="flex gap-2">
+                            <button type="button" onClick={() => setConfirmReset(false)} className="flex-1 py-2.5 rounded-xl bg-[#30363D] text-white font-semibold">Нет</button>
+                            <button type="button" onClick={doResetBalance} className="flex-1 py-2.5 rounded-xl bg-[#FF6B6B] text-white font-semibold">Да, сбросить</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

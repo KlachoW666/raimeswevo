@@ -2,8 +2,11 @@
 
 const env = typeof import.meta !== 'undefined' && (import.meta as any).env;
 
+/** Явный origin для API (напр. https://wevox.ru). При сборке: VITE_APP_URL=https://wevox.ru npm run build */
+const APP_ORIGIN = (env?.VITE_APP_URL as string) || '';
+
 export const CONFIG = {
-    API_BASE: (env?.VITE_API_URL as string) || '',
+    API_BASE: (env?.VITE_API_URL as string) || APP_ORIGIN,
     /** Telegram bot username (no @) for Mini App and referral link. Must match BotFather exactly (e.g. wevoautobot). */
     BOT_USERNAME: (env?.VITE_BOT_USERNAME as string) || 'wevoautobot',
     /** Support contact Telegram username without @; link for «Поддержка» button. */

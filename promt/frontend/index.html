@@ -9,9 +9,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>WEVOX Auto</title>
+    <!-- Шрифты загружаем асинхронно, чтобы не блокировать первый экран на телефоне -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" /></noscript>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
       // Сразу убираем индикатор загрузки Telegram (4 квадрата), показываем свой экран «Загрузка…»
@@ -36,15 +38,20 @@
       </div>
     </div>
     <script>
-      setTimeout(function(){
+      var reloadBtn = document.getElementById('reload-btn');
+      if (reloadBtn) reloadBtn.addEventListener('click', function(){ window.location.reload(); });
+      function showReload(msg) {
         var btn = document.getElementById('reload-btn');
-        if (btn) {
-          btn.style.display = 'block';
-          var span = document.querySelector('#loading-screen span');
-          if (span) span.textContent = 'Долго загружается?';
-        }
+        var span = document.querySelector('#loading-screen span');
+        if (span) span.textContent = msg || 'Не удалось загрузить приложение.';
+        if (btn) btn.style.display = 'block';
+      }
+      setTimeout(function(){
+        if (!window.__APP_LOADED__) showReload('Не удалось загрузить приложение. Проверьте интернет и нажмите «Обновить».');
+      }, 8000);
+      setTimeout(function(){
+        if (!window.__APP_LOADED__) showReload('Долго загружается? Нажмите «Обновить страницу».');
       }, 10000);
-      document.getElementById('reload-btn').addEventListener('click', function(){ window.location.reload(); });
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

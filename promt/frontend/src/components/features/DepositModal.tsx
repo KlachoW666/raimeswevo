@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Component, type ReactNode } from 'react';
 import { X, Copy, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import type { Network } from '../../store/walletStore';
@@ -9,7 +9,26 @@ import { useUserStore } from '../../store/userStore';
 
 const NETWORKS: Network[] = ['TON', 'BSC', 'BNB', 'TRC', 'SOL', 'BTC', 'ETH'];
 
-export default function DepositModal({ onClose }: { onClose: () => void }) {
+/** Ловит ошибки внутри модалки (например QR-код в WebView), чтобы не ронять всё приложение */
+class DepositModalErrorBoundary extends Component<{ onClose: () => void; children: ReactNode }> {
+    state = { hasError: false };
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-[#0B0F19]" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+                    <p className="text-[#94A3B8] text-center mb-4">Ошибка окна пополнения. Закройте и попробуйте снова.</p>
+                    <button type="button" onClick={() => { this.setState({ hasError: false }); this.props.onClose(); }} className="px-5 py-2.5 rounded-xl bg-[#00E676] text-black font-semibold">Закрыть</button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+function DepositModalContent({ onClose }: { onClose: () => void }) {
     const userId = useUserStore((s) => s.userId);
     const [activeNetwork, setActiveNetwork] = useState<Network>('TON');
     const [address, setAddress] = useState('');
@@ -181,12 +200,7 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                                     <Loader2 className="animate-spin text-black" size={36} />
                                 </div>
                             ) : (
-                                <QRCode
-                                    value={address}
-                                    size={200}
-                                    style={{ width: 200, height: 200 }}
-                                    aria-label="QR Code"
-                                />
+                                <QRCodeSafe value={address} />
                             )}
                         </div>
 
@@ -242,5 +256,32 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                 </div>
             </div>
         </div>
+    );
+}
+
+/** QR-код: при ошибке рендера ловит Error Boundary и показывается «Ошибка окна пополнения» */
+function QRCodeSafe({ value }: { value: string }) {
+    if (!value) {
+        return (
+            <div className="w-[200px] h-[200px] flex items-center justify-center p-3 bg-white rounded-3xl">
+                <span className="text-[10px] font-mono text-black break-all text-center">Скопируйте адрес ниже</span>
+            </div>
+        );
+    }
+    return (
+        <QRCode
+            value={value}
+            size={200}
+            style={{ width: 200, height: 200 }}
+            aria-label="QR Code"
+        />
+    );
+}
+
+export default function DepositModal({ onClose }: { onClose: () => void }) {
+    return (
+        <DepositModalErrorBoundary onClose={onClose}>
+            <DepositModalContent onClose={onClose} />
+        </DepositModalErrorBoundary>
     );
 }

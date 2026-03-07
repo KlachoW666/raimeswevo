@@ -4,6 +4,10 @@ import './index.css'
 import App from './App.tsx'
 import { useUserStore } from './store/userStore'
 
+declare global { interface Window { __APP_LOADED__?: boolean } }
+// Для index.html: если скрипт не загрузился (телефон/сеть), через 8 с покажется «Обновить»
+window.__APP_LOADED__ = true
+
 // Telegram start_param (e.g. from t.me/bot/app?startapp=REFCODE): set referrer when opening via ref link.
 // referredBy is NOT persisted so it's only set when user actually opens the app with startapp= in URL.
 const START_PARAM_REGEX = /^[\w-]{1,512}$/

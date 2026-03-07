@@ -1,6 +1,6 @@
 import { CONFIG } from '../config';
 
-// Явный origin в Telegram Web App избегает проблем с базой запросов на мобильных
+// Базовый URL API: из .env (VITE_APP_URL) или текущий origin. Критично для работы с телефона.
 const base = CONFIG.API_BASE || (typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '');
 
 const REQUEST_TIMEOUT_MS = 15000;

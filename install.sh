@@ -107,6 +107,9 @@ fi
 mkdir -p /var/www/miniapp/.well-known/acme-challenge
 chmod -R 755 /var/www/miniapp/.well-known 2>/dev/null || true
 
+# Современные шифры для Telegram/Chromium (избегаем ERR_SSL_VERSION_OR_CIPHER_MISMATCH)
+SSL_CIPHERS="ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
+
 NGINX_CONF="/etc/nginx/sites-available/miniapp"
 cat > "$NGINX_CONF" << NGINXEOF
 # Redirect IP to canonical domain (WEVOX.RU)
@@ -123,6 +126,8 @@ server {
     ssl_certificate     $CERT_PEM;
     ssl_certificate_key  $KEY_PEM;
     ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         $SSL_CIPHERS;
+    ssl_prefer_server_ciphers on;
     return 301 https://$DOMAIN\$request_uri;
 }
 
@@ -149,7 +154,7 @@ server {
     ssl_certificate     $CERT_PEM;
     ssl_certificate_key $KEY_PEM;
     ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5:!RC4:!3DES;
+    ssl_ciphers         $SSL_CIPHERS;
     ssl_prefer_server_ciphers on;
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 1d;
@@ -220,6 +225,8 @@ server {
     ssl_certificate     $CERT_PEM;
     ssl_certificate_key  $KEY_PEM;
     ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         $SSL_CIPHERS;
+    ssl_prefer_server_ciphers on;
     return 301 https://$DOMAIN\$request_uri;
 }
 
@@ -246,7 +253,7 @@ server {
     ssl_certificate     $CERT_PEM;
     ssl_certificate_key $KEY_PEM;
     ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5:!RC4:!3DES;
+    ssl_ciphers         $SSL_CIPHERS;
     ssl_prefer_server_ciphers on;
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 1d;

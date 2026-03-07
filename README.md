@@ -38,8 +38,30 @@ Telegram Web App для авто-трейдинга: пополнение USDT, 
 - Проверьте в BotFather, что у бота в **Menu Button** указан именно ваш домен: `https://wevox.ru/miniapp` (или ваш домен вместо wevox.ru).
 - Откройте в браузере `https://wevox.ru/miniapp` — должна открываться страница приложения (не 404). Если 404 — пересоберите frontend на сервере (`cd /var/www/miniapp/promt/frontend && npm run build`) и проверьте Nginx.
 
-**Если в Telegram Desktop «Подключение не защищено» / ERR_SSL_VERSION_OR_CIPHER_MISMATCH:**
-- Telegram Desktop не доверяет самоподписанному сертификату. Нужен сертификат Let's Encrypt: на сервере выполните `certbot --nginx -d wevox.ru` (DNS для домена должен указывать на этот сервер). После успешного выпуска перезапустите Nginx и снова откройте приложение.
+**Почему «Подключение не защищено» / ERR_SSL_VERSION_OR_CIPHER_MISMATCH — и как пофиксить**
+
+Telegram не открывает сайт, пока не удаётся согласовать защищённое соединение (протокол TLS и набор шифров). Другие приложения открываются мгновенно, потому что у них настроен доверенный сертификат и современный SSL. Сделайте два шага **на сервере**:
+
+1. **Получить сертификат Let's Encrypt** (обязательно; самоподписанный сертификат Telegram не принимает):
+   ```bash
+   sudo certbot --nginx -d wevox.ru -d www.wevox.ru --agree-tos -m admin@wevox.ru
+   ```
+   DNS для `wevox.ru` и `www.wevox.ru` должен указывать на IP вашего сервера. Если certbot уже делал сертификат — шаг можно пропустить.
+
+2. **Подставить современные шифры в Nginx** (чтобы не было ERR_SSL_VERSION_OR_CIPHER_MISMATCH). Либо заново применить конфиг из репозитория (в нём уже прописаны нужные ciphers):
+   ```bash
+   cd /var/www/miniapp && sudo ./install.sh
+   ```
+   Либо вручную: откройте `/etc/nginx/sites-available/miniapp` и в каждом блоке `listen 443 ssl` убедитесь, что есть:
+   - `ssl_protocols TLSv1.2 TLSv1.3;`
+   - `ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;`
+   - `ssl_prefer_server_ciphers on;`
+   Затем проверка и перезагрузка:
+   ```bash
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+После этого откройте приложение в Telegram снова — соединение должно устанавливаться, как у других приложений.
 
 **Бот и рассылки:** создайте файл `promt/backend/.env` и добавьте строку:
    ```
@@ -60,6 +82,17 @@ Telegram Web App для авто-трейдинга: пополнение USDT, 
 **Проверка API после деплоя:** из корня репозитория выполните `cd promt/backend && npm run check-api`. Для продакшена задайте `BASE_URL=https://wevox.ru` (или ваш домен). При необходимости укажите `USER_ID` и `ADMIN_USER_ID` для проверки эндпоинтов с авторизацией.
 
 **CI / автоматическая проверка:** в репозитории настроен GitHub Actions workflow `.github/workflows/api-check.yml`: при push/PR в `main` поднимается backend, выполняется сценарий проверки (health, zyphex/rate; при заданных `USER_ID`/`ADMIN_USER_ID` — также wallet и users). Скрипт `promt/backend/scripts/check-api.mjs` выходит с кодом 1 при ошибке (удобно для CI). Запуск тех же проверок локально: `cd promt/backend && npm test` (или `npm run check-api`).
+
+## Диагностика: приложение не открывается / «загрузка» / «сервер недоступен»
+
+Проверьте по шагам **на сервере**:
+
+1. **Backend запущен:** `pm2 list` — должен быть процесс `wevox-api`. Если нет: `cd /var/www/miniapp/promt/backend && PORT=3001 pm2 start server.js --name wevox-api` и `pm2 save`.
+2. **API отвечает:** `curl -s https://wevox.ru/api/health` — ответ `{"ok":true}`. Если ошибка или таймаут — проверьте Nginx (location /api/ проксирует на порт 3001) и что backend слушает 3001.
+3. **Frontend собран и раздаётся:** `ls /var/www/miniapp/promt/frontend/dist/index.html` и `ls /var/www/miniapp/promt/frontend/dist/assets/` — файлы должны быть. Откройте в браузере `https://wevox.ru/miniapp/` — должна открыться приложение, не 404. Если 404: `cd /var/www/miniapp/promt/frontend && npm run build`, затем перезагрузите Nginx.
+4. **Сборка с явным доменом (если с телефона не грузится):** на сервере пересоберите frontend с переменной окружения: `cd /var/www/miniapp/promt/frontend && VITE_APP_URL=https://wevox.ru npm run build`. Затем перезапустите Nginx при необходимости.
+
+В Telegram: если видите «Сервер недоступен» — backend не отвечает (шаги 1–2). Если бесконечная «Загрузка…» — не открылся JS или API (шаги 2–4).
 
 ## Локальная разработка
 
