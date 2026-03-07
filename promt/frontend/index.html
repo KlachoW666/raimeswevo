@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimum-scale=1.0" />
+    <meta name="theme-color" content="#0D1117" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>WEVOX Auto</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,13 +19,12 @@
         var tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
-        // Match app theme: header and background (WEVOX dark #0D1117)
+        if (tg.enableClosingConfirmation) tg.enableClosingConfirmation(false);
+        if (tg.isVersionAtLeast && tg.isVersionAtLeast('6.7') && tg.setViewportStableHeight) tg.setViewportStableHeight(true);
         if (tg.setHeaderColor) tg.setHeaderColor('#0D1117');
         if (tg.setBackgroundColor) tg.setBackgroundColor('#0D1117');
         var colorScheme = tg.colorScheme || 'dark';
-        if (colorScheme === 'dark') {
-          document.documentElement.classList.add('dark');
-        }
+        if (colorScheme === 'dark') document.documentElement.classList.add('dark');
       }
     </script>
   </head>

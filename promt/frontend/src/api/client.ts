@@ -1,6 +1,7 @@
 import { CONFIG } from '../config';
 
-const base = CONFIG.API_BASE || '';
+// Явный origin в Telegram Web App избегает проблем с базой запросов на мобильных
+const base = CONFIG.API_BASE || (typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '');
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = path.startsWith('http') ? path : `${base}${path}`;

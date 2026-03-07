@@ -203,14 +203,10 @@ export const MockAPI = {
     async getDepositAddress(network: Network): Promise<{ address: string; memo: string }> {
         const userId = useUserStore.getState().userId;
         if (!userId) return { address: '', memo: '' };
-        try {
-            const res = await api.get<{ address: string; memo: string }>(
-                `/api/wallet/deposit-address?userId=${encodeURIComponent(userId)}&network=${encodeURIComponent(network)}`
-            );
-            return { address: res.address, memo: res.memo };
-        } catch {
-            return { address: '', memo: '' };
-        }
+        const res = await api.get<{ address: string; memo: string }>(
+            `/api/wallet/deposit-address?userId=${encodeURIComponent(userId)}&network=${encodeURIComponent(network)}`
+        );
+        return { address: res.address ?? '', memo: res.memo ?? '' };
     },
 
     async checkDepositStatus(network: Network): Promise<string> {

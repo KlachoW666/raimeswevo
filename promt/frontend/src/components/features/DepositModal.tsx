@@ -5,10 +5,12 @@ import type { Network } from '../../store/walletStore';
 import { MockAPI } from '../../api/mockServices';
 import { useTelegram } from '../../hooks/useTelegram';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useUserStore } from '../../store/userStore';
 
 const NETWORKS: Network[] = ['TON', 'BSC', 'BNB', 'TRC', 'SOL', 'BTC', 'ETH'];
 
 export default function DepositModal({ onClose }: { onClose: () => void }) {
+    const userId = useUserStore((s) => s.userId);
     const [activeNetwork, setActiveNetwork] = useState<Network>('TON');
     const [address, setAddress] = useState('');
     const [memo, setMemo] = useState('');
@@ -22,10 +24,14 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
     const { hapticFeedback } = useTelegram();
     const { t } = useTranslation();
 
-    // Request counter to prevent race conditions when switching networks fast
     const requestIdRef = useRef(0);
 
     useEffect(() => {
+        if (!userId) {
+            setLoading(false);
+            setLoadError('Сессия не найдена. Закройте и откройте приложение из Telegram снова.');
+            return;
+        }
         const currentRequestId = ++requestIdRef.current;
         setLoading(true);
         setAddress('');
@@ -41,10 +47,11 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
             setMemo(data.memo || '');
             setLoading(false);
             if (!data.address) setLoadError('Не удалось загрузить адрес. Проверьте интернет и повторите.');
-        }).catch(() => {
+        }).catch((err: unknown) => {
             if (currentRequestId !== requestIdRef.current) return;
             setLoading(false);
-            setLoadError('Ошибка загрузки. Проверьте интернет и нажмите «Обновить».');
+            const msg = err instanceof Error ? err.message : '';
+            setLoadError(msg ? `Ошибка: ${msg}` : 'Ошибка загрузки. Проверьте интернет и нажмите «Обновить».');
         });
 
         if (pollRef.current) clearInterval(pollRef.current);
@@ -62,7 +69,7 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
         return () => {
             if (pollRef.current) clearInterval(pollRef.current);
         };
-    }, [activeNetwork]);
+    }, [activeNetwork, userId]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(address);
@@ -79,25 +86,38 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col w-full h-full animate-slide-in-bottom" style={{ background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)' }}>
-
-            {/* Header */}
-            <div className="flex justify-between items-start px-5 pt-6 pb-4">
+        <div
+            className="fixed left-0 right-0 top-0 z-50 flex flex-col w-full animate-slide-in-bottom"
+            style={{
+                background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)',
+                height: '100dvh',
+                paddingTop: 'env(safe-area-inset-top, 0)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0)',
+            }}
+        >
+            <div className="flex justify-between items-start px-4 pt-4 pb-3 shrink-0">
                 <div>
-                    <h3 className="text-[22px] font-bold text-[#F8FAFC] tracking-wide mb-1.5">
+                    <h3 className="text-[20px] font-bold text-[#F8FAFC] tracking-wide mb-1">
                         {t('deposit.title')}
                     </h3>
-                    <div className="text-[11px] font-semibold text-[#64748B] tracking-widest uppercase">
+                    <div className="text-[10px] font-semibold text-[#64748B] tracking-widest uppercase">
                         {NETWORKS.join(' · ')}
                     </div>
                 </div>
-                <button onClick={onClose} className="p-2 rounded-xl glass-card transition-all text-[#94A3B8] hover:text-white active:scale-90">
-                    <X size={20} />
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl glass-card text-[#94A3B8] hover:text-white active:scale-95 touch-manipulation"
+                    aria-label="Закрыть"
+                >
+                    <X size={22} />
                 </button>
             </div>
 
-            {/* Content */}
-            <div className="px-5 pb-8 overflow-y-auto no-scrollbar flex-1 min-h-0 flex flex-col">
+            <div
+                className="px-4 pb-6 overflow-y-auto overflow-x-hidden flex-1 min-h-0 flex flex-col no-scrollbar"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+            >
 
                 <div className="mb-6 mt-2">
                     <div className="text-[11px] text-[#64748B] mb-3 font-bold uppercase tracking-wider">{t('deposit.selectNetwork')}</div>
@@ -109,7 +129,7 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                                     setActiveNetwork(net);
                                     hapticFeedback?.selectionChanged();
                                 }}
-                                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 active:scale-95 ${activeNetwork === net
+                                className={`min-h-[44px] px-4 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 active:scale-95 touch-manipulation ${activeNetwork === net
                                     ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black shadow-[0_2px_10px_rgba(0,230,118,0.2)]'
                                     : 'glass-card text-[#94A3B8] hover:text-white'
                                     }`}
@@ -148,8 +168,8 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                                 {loadError}
                                 <button
                                     type="button"
-                                    onClick={() => { setLoadError(null); setLoading(true); MockAPI.getDepositAddress(activeNetwork).then((data) => { setAddress(data.address || ''); setMemo(data.memo || ''); setLoading(false); if (!data.address) setLoadError('Не удалось загрузить адрес.'); }).catch(() => { setLoading(false); setLoadError('Ошибка загрузки. Повторите.'); }); }}
-                                    className="mt-2 block w-full py-2 rounded-lg bg-[#FF5252]/20 font-semibold"
+                                    onClick={() => { setLoadError(null); setLoading(true); MockAPI.getDepositAddress(activeNetwork).then((data) => { setAddress(data.address || ''); setMemo(data.memo || ''); setLoading(false); if (!data.address) setLoadError('Не удалось загрузить адрес.'); }).catch((err: unknown) => { setLoading(false); setLoadError(err instanceof Error ? err.message : 'Ошибка загрузки. Повторите.'); }); }}
+                                    className="mt-2 block w-full min-h-[44px] py-3 rounded-xl bg-[#FF5252]/20 font-semibold touch-manipulation"
                                 >
                                     Обновить
                                 </button>
@@ -174,19 +194,15 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                             {/* Deposit Address */}
                             <div className="text-[11px] text-[#64748B] uppercase tracking-wider text-center font-bold">{t('deposit.depositAddress')}</div>
 
-                            <div className="relative glass-card rounded-2xl p-4 text-left min-h-[72px] flex items-center">
-                                {loading ? (
-                                    <div className="w-2/3 h-4 skeleton" />
-                                ) : (
-                                    <div className="font-mono text-sm text-[#F8FAFC] pr-28 break-all leading-relaxed">
-                                        {address}
-                                    </div>
-                                )}
-
+                            <div className="glass-card rounded-2xl p-4 text-left min-h-[72px] flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
+                                <div className="flex-1 min-w-0 font-mono text-sm text-[#F8FAFC] break-all leading-relaxed">
+                                    {loading ? <div className="w-2/3 h-4 skeleton" /> : address || '—'}
+                                </div>
                                 <button
+                                    type="button"
                                     onClick={handleCopy}
                                     disabled={loading}
-                                    className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl transition-all duration-300 active:scale-90 font-bold text-[13px] ${copied
+                                    className={`shrink-0 min-h-[44px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 active:scale-95 font-bold text-[13px] touch-manipulation ${copied
                                         ? 'glass-card text-[#00E676] border-[#00E676]/40 shadow-[0_0_12px_rgba(0,230,118,0.2)]'
                                         : 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black shadow-[0_2px_10px_rgba(0,230,118,0.2)]'
                                         }`}
@@ -196,24 +212,19 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                                 </button>
                             </div>
 
-                            {/* Memo / Comment */}
                             <div className="text-[11px] text-[#FBBF24] uppercase tracking-wider text-center font-bold mt-4">
                                 ⚠️ ОБЯЗАТЕЛЬНО УКАЖИТЕ MEMO / КОММЕНТАРИЙ
                             </div>
 
-                            <div className="relative glass-card rounded-2xl p-4 text-left border-[#FBBF24]/20 min-h-[56px] flex items-center">
-                                {loading ? (
-                                    <div className="w-1/2 h-4 skeleton" />
-                                ) : (
-                                    <div className="font-mono text-base text-[#FBBF24] font-bold pr-28 break-all leading-relaxed">
-                                        {memo}
-                                    </div>
-                                )}
-
+                            <div className="glass-card rounded-2xl p-4 text-left border-[#FBBF24]/20 min-h-[56px] flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
+                                <div className="flex-1 min-w-0 font-mono text-base text-[#FBBF24] font-bold break-all leading-relaxed">
+                                    {loading ? <div className="w-1/2 h-4 skeleton" /> : memo || '—'}
+                                </div>
                                 <button
+                                    type="button"
                                     onClick={handleCopyMemo}
                                     disabled={loading}
-                                    className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl transition-all duration-300 active:scale-90 font-bold text-[13px] ${copiedMemo
+                                    className={`shrink-0 min-h-[44px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 active:scale-95 font-bold text-[13px] touch-manipulation ${copiedMemo
                                         ? 'glass-card text-[#FBBF24] border-[#FBBF24]/40'
                                         : 'bg-[#FBBF24] text-black shadow-[0_2px_10px_rgba(251,191,36,0.2)]'
                                         }`}
@@ -225,7 +236,7 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                         </div>
                     </div>
 
-                    <div className="text-center text-[12px] text-[#FBBF24]/80 px-4 leading-relaxed pt-8 mt-auto font-medium">
+                    <div className="text-center text-[12px] text-[#FBBF24]/80 px-2 leading-relaxed pt-6 mt-auto font-medium">
                         Переводите средства ТОЛЬКО в сети {activeNetwork}. Без указания Memo платёж не будет зачислен автоматически.
                     </div>
                 </div>

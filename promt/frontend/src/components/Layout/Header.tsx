@@ -12,7 +12,7 @@ export default function Header() {
     const displayName = user?.username || user?.first_name || 'User';
 
     return (
-        <header className="flex w-full justify-between items-center px-4 h-[60px] bg-[#162220] border-b border-[#00E676]/10 shrink-0 relative z-40">
+        <header className="flex w-full justify-between items-center px-4 min-h-[60px] bg-[#162220] border-b border-[#00E676]/10 shrink-0 relative z-40" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)', minHeight: 'calc(60px + env(safe-area-inset-top, 0px))' }}>
             <div className="flex items-center gap-2">
                 <span className="font-bold text-white text-lg tracking-tight">
                     WEVOX <span className="text-[#00E676]">Auto</span>

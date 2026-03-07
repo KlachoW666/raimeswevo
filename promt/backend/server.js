@@ -226,8 +226,8 @@ app.get('/api/wallet/deposit-address', (req, res) => {
       networkFullName: networkNames[network] || network,
     });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
+    console.error('[deposit-address]', e);
+    res.status(500).json({ error: 'server_error', message: String(e && e.message || e) });
   }
 });
 

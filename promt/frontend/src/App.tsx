@@ -147,7 +147,15 @@ const PageFallback = () => (
 );
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-col h-[100dvh] overflow-hidden bg-bg-main text-text-main" style={{ background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)' }}>
+  <div
+    className="flex flex-col overflow-hidden bg-bg-main text-text-main"
+    style={{
+      background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)',
+      minHeight: '100dvh',
+      height: '100dvh',
+      paddingTop: 'env(safe-area-inset-top, 0)',
+    }}
+  >
     <Header />
     <PageContainer>
       {children}
