@@ -38,6 +38,9 @@ Telegram Web App для авто-трейдинга: пополнение USDT, 
 - Проверьте в BotFather, что у бота в **Menu Button** указан именно ваш домен: `https://wevox.ru/miniapp` (или ваш домен вместо wevox.ru).
 - Откройте в браузере `https://wevox.ru/miniapp` — должна открываться страница приложения (не 404). Если 404 — пересоберите frontend на сервере (`cd /var/www/miniapp/promt/frontend && npm run build`) и проверьте Nginx.
 
+**Если в Telegram Desktop «Подключение не защищено» / ERR_SSL_VERSION_OR_CIPHER_MISMATCH:**
+- Telegram Desktop не доверяет самоподписанному сертификату. Нужен сертификат Let's Encrypt: на сервере выполните `certbot --nginx -d wevox.ru` (DNS для домена должен указывать на этот сервер). После успешного выпуска перезапустите Nginx и снова откройте приложение.
+
 **Бот и рассылки:** создайте файл `promt/backend/.env` и добавьте строку:
    ```
    TELEGRAM_BOT_TOKEN=123456:ABC-DEF...

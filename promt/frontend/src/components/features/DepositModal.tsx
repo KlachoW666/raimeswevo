@@ -16,6 +16,7 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
     const [copied, setCopied] = useState(false);
     const [copiedMemo, setCopiedMemo] = useState(false);
     const [depositStatus, setDepositStatus] = useState<string>('none');
+    const [loadError, setLoadError] = useState<string | null>(null);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const { hapticFeedback } = useTelegram();
@@ -32,12 +33,18 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
         setDepositStatus('none');
         setCopied(false);
         setCopiedMemo(false);
+        setLoadError(null);
 
         MockAPI.getDepositAddress(activeNetwork).then((data) => {
             if (currentRequestId !== requestIdRef.current) return;
-            setAddress(data.address);
-            setMemo(data.memo);
+            setAddress(data.address || '');
+            setMemo(data.memo || '');
             setLoading(false);
+            if (!data.address) setLoadError('Не удалось загрузить адрес. Проверьте интернет и повторите.');
+        }).catch(() => {
+            if (currentRequestId !== requestIdRef.current) return;
+            setLoading(false);
+            setLoadError('Ошибка загрузки. Проверьте интернет и нажмите «Обновить».');
         });
 
         if (pollRef.current) clearInterval(pollRef.current);
@@ -136,8 +143,20 @@ export default function DepositModal({ onClose }: { onClose: () => void }) {
                             </div>
                         )}
 
+                        {loadError && (
+                            <div className="mb-4 p-4 rounded-xl bg-[#FF5252]/10 border border-[#FF5252]/30 text-[#FF5252] text-sm text-center">
+                                {loadError}
+                                <button
+                                    type="button"
+                                    onClick={() => { setLoadError(null); setLoading(true); MockAPI.getDepositAddress(activeNetwork).then((data) => { setAddress(data.address || ''); setMemo(data.memo || ''); setLoading(false); if (!data.address) setLoadError('Не удалось загрузить адрес.'); }).catch(() => { setLoading(false); setLoadError('Ошибка загрузки. Повторите.'); }); }}
+                                    className="mt-2 block w-full py-2 rounded-lg bg-[#FF5252]/20 font-semibold"
+                                >
+                                    Обновить
+                                </button>
+                            </div>
+                        )}
                         <div className="inline-flex items-center justify-center p-4 rounded-3xl bg-white mb-8 w-56 h-56 mx-auto relative shadow-[0_8px_30px_rgba(0,0,0,0.3)]" style={{ width: 224, height: 224 }}>
-                            {loading || !address ? (
+                            {loading || (!address && !loadError) ? (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white rounded-3xl">
                                     <Loader2 className="animate-spin text-black" size={36} />
                                 </div>

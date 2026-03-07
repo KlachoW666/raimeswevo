@@ -8,10 +8,14 @@ import { useUserStore } from './store/userStore'
 // referredBy is NOT persisted so it's only set when user actually opens the app with startapp= in URL.
 const START_PARAM_REGEX = /^[\w-]{1,512}$/
 
+const REF_STORAGE_KEY = 'wevox_ref'
+
 function initTelegramStartParam() {
   const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param
   if (typeof startParam === 'string' && START_PARAM_REGEX.test(startParam)) {
-    useUserStore.getState().setReferredBy(startParam.trim().toUpperCase())
+    const code = startParam.trim().toUpperCase()
+    useUserStore.getState().setReferredBy(code)
+    try { sessionStorage.setItem(REF_STORAGE_KEY, code) } catch { /* ignore */ }
   }
 }
 

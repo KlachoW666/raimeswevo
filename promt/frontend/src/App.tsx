@@ -170,7 +170,9 @@ function App() {
   useEffect(() => {
     const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
     if (typeof startParam === 'string' && START_PARAM_REGEX.test(startParam)) {
-      useUserStore.getState().setReferredBy(startParam.trim().toUpperCase());
+      const code = startParam.trim().toUpperCase();
+      useUserStore.getState().setReferredBy(code);
+      try { sessionStorage.setItem('wevox_ref', code); } catch { /* ignore */ }
     }
   }, []);
 
