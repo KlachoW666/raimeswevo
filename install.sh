@@ -35,7 +35,7 @@ if [ -d "$APP_DIR/.git" ]; then
     echo "Updating existing repo (database and settings are preserved)..."
     cd "$APP_DIR"
     git fetch origin
-    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || BRANCH=main
+    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || BRANCH=master
     git reset --hard "origin/$BRANCH"
     cd - >/dev/null
 else
@@ -43,7 +43,7 @@ else
         echo "Removing non-git directory..."
         rm -rf "$APP_DIR"
     fi
-    git clone "$REPO_URL" "$APP_DIR"
+    git clone -b master "$REPO_URL" "$APP_DIR"
 fi
 
 # --- Frontend ---

@@ -14,7 +14,7 @@ Telegram Web App для авто-трейдинга: пополнение USDT, 
 
 1. На сервере выполните (от root или через sudo):
    ```bash
-   curl -sL -o install.sh https://raw.githubusercontent.com/KlachoW666/raimeswevo/main/install.sh
+   curl -sL -o install.sh https://raw.githubusercontent.com/KlachoW666/raimeswevo/master/install.sh
    chmod +x install.sh
    sudo ./install.sh
    ```
@@ -53,7 +53,7 @@ Telegram Web App для авто-трейдинга: пополнение USDT, 
    ```
    Убедитесь, что в Nginx проксируется не только `/api/`, но и именно этот путь; при необходимости добавьте в конфиг location для `/api/telegram-webhook`. После этого при отправке /start бот будет отвечать информацией о приложении.
 
-**Важно:** В GitHub у репозитория должна быть ветка **main** (install.sh делает `git pull` / `git reset --hard origin/main`). Если используете другую ветку, измените в install.sh `origin/main` на нужную.
+**Важно:** В репозитории [raimeswevo](https://github.com/KlachoW666/raimeswevo) используется ветка **master**. install.sh клонирует и обновляет именно её (`origin/master`).
 
 **Проверка API после деплоя:** из корня репозитория выполните `cd promt/backend && npm run check-api`. Для продакшена задайте `BASE_URL=https://wevox.ru` (или ваш домен). При необходимости укажите `USER_ID` и `ADMIN_USER_ID` для проверки эндпоинтов с авторизацией.
 
@@ -64,3 +64,5 @@ Telegram Web App для авто-трейдинга: пополнение USDT, 
 - **Backend:** `cd promt/backend && npm install && npm run dev` (порт 3001 по умолчанию)
 - **Frontend:** `cd promt/frontend && npm install && npm run dev` (Vite, порт 5173)
 - **Landing:** откройте `promt/landing/index.html` в браузере или раздайте через любой HTTP-сервер
+
+
