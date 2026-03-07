@@ -75,7 +75,7 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col w-full h-full animate-slide-in-bottom" style={{ background: 'linear-gradient(180deg, #0B0F19 0%, #060A13 100%)' }}>
+        <div className="fixed inset-0 z-50 flex flex-col w-full h-full animate-slide-in-bottom" style={{ background: 'linear-gradient(180deg, #0A0E16 0%, #050810 100%)', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
             {/* Header */}
             <div className="flex justify-between items-start px-5 pt-6 pb-4">
@@ -87,7 +87,7 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
                         {NETWORKS.join(' · ')}
                     </div>
                 </div>
-                <button onClick={onClose} className="p-2 rounded-xl glass-card transition-all text-[#94A3B8] hover:text-white active:scale-90">
+                <button onClick={onClose} className="p-2 rounded-[14px] surface-raised transition-all text-[#94A3B8] hover:text-[#F1F5F9] active:scale-90">
                     <X size={20} />
                 </button>
             </div>
@@ -98,7 +98,7 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
                 {/* Network Selector */}
                 <div>
                     <div className="text-xs text-[#64748B] font-bold uppercase mb-2 tracking-wider">{t('withdraw.selectNetwork')}</div>
-                    <div className="flex glass-card p-1 rounded-xl overflow-x-auto no-scrollbar">
+                    <div className="flex bento-card p-1 rounded-[14px] overflow-x-auto no-scrollbar">
                         {NETWORKS.map((net) => (
                             <button
                                 key={net}
@@ -107,10 +107,7 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
                                     setError('');
                                     hapticFeedback?.selectionChanged();
                                 }}
-                                className={`flex-1 min-w-[60px] py-2 text-xs font-bold rounded-lg transition-all duration-200 ${activeNetwork === net
-                                    ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black shadow-[0_2px_10px_rgba(0,230,118,0.2)]'
-                                    : 'text-[#64748B] hover:text-[#94A3B8]'
-                                    }`}
+                                className={`flex-1 min-w-[60px] py-2 text-xs font-bold rounded-[10px] transition-all duration-200 ${activeNetwork === net ? 'btn-primary' : 'text-[#64748B] hover:text-[#94A3B8]'}`}
                             >
                                 {net}
                             </button>
@@ -137,7 +134,7 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
                             }}
                             disabled={loading}
                             placeholder="0.00"
-                            className="w-full glass-card border-white/[0.08] focus:border-[#00E676]/40 rounded-xl px-4 py-3.5 text-[#F8FAFC] font-mono text-xl focus:outline-none transition-all duration-200 disabled:opacity-40"
+                            className="w-full bg-[#111820] border border-white/[0.08] focus:border-[#00E676]/40 rounded-[14px] px-4 py-3.5 text-[#F1F5F9] font-mono text-xl focus:outline-none transition-colors disabled:opacity-40"
                         />
                         <button
                             onClick={handleMax}
@@ -170,13 +167,13 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
                         }}
                         disabled={loading}
                         placeholder={getAddressPlaceholder(activeNetwork)}
-                        className="w-full glass-card border-white/[0.08] focus:border-[#00E676]/40 rounded-xl px-4 py-3.5 text-[#F8FAFC] font-mono text-sm focus:outline-none transition-all duration-200 disabled:opacity-40 placeholder:text-[#64748B]/30"
+                        className="w-full bg-[#111820] border border-white/[0.08] focus:border-[#00E676]/40 rounded-[14px] px-4 py-3.5 text-[#F1F5F9] font-mono text-sm focus:outline-none transition-colors disabled:opacity-40 placeholder:text-[#64748B]/50"
                     />
                 </div>
 
                 {/* Error */}
                 {error && (
-                    <div className="p-3 rounded-xl glass-card border-[#FF5252]/30 text-[#FF5252] text-xs font-semibold text-center glow-red animate-shake">
+                    <div className="p-3 rounded-[14px] surface-raised border-[#FF5252]/30 text-[#FF5252] text-xs font-semibold text-center glow-red animate-shake">
                         {error}
                     </div>
                 )}
@@ -186,14 +183,14 @@ export default function WithdrawModal({ onClose }: { onClose: () => void }) {
                     <button
                         onClick={onClose}
                         disabled={loading}
-                        className="py-3.5 rounded-xl glass-card text-[#94A3B8] font-semibold transition-all hover:bg-white/[0.04] active:scale-95 disabled:opacity-40"
+                        className="btn-secondary py-3.5 disabled:opacity-40"
                     >
                         {t('withdraw.cancel')}
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !amount || !address}
-                        className="py-3.5 rounded-xl bg-gradient-to-r from-[#00E676] to-[#00C853] text-black font-bold active:scale-95 transition-all flex items-center justify-center disabled:opacity-40 disabled:active:scale-100 shadow-[0_4px_20px_rgba(0,230,118,0.25)]"
+                        className="btn-primary py-3.5 flex items-center justify-center disabled:opacity-40 disabled:active:scale-100"
                     >
                         {loading ? <Loader2 className="animate-spin" size={20} /> : t('withdraw.withdrawBtn')}
                     </button>

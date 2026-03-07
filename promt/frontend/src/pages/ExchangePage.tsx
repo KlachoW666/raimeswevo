@@ -133,8 +133,8 @@ export default function ExchangePage() {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="glass-card-elevated rounded-2xl p-6 relative overflow-hidden">
+        <div className="space-y-5 stagger-children">
+            <div className="surface-floating p-6 relative overflow-hidden">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-[#00E676]/[0.06] blur-[60px] rounded-full pointer-events-none" />
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 text-[#64748B] text-sm mb-2">
@@ -152,7 +152,7 @@ export default function ExchangePage() {
                             <div className="text-xs text-[#8B949E] mb-1.5">
                                 {t('exchange.poolRemainingFormat').replace('X', pool.remaining.toLocaleString()).replace('Y', pool.totalSupply.toLocaleString())}
                             </div>
-                            <div className="h-2 bg-[#161B22] rounded-full overflow-hidden border border-[#30363D]">
+                            <div className="h-2 bg-[#111820] rounded-full overflow-hidden border border-white/[0.06]">
                                 <div
                                     className="h-full bg-[#00E676]/60 rounded-full transition-all duration-300"
                                     style={{ width: `${(pool.remaining / pool.totalSupply) * 100}%` }}
@@ -173,7 +173,7 @@ export default function ExchangePage() {
                             value={amountUsdt}
                             onChange={(e) => { setAmountUsdt(e.target.value); setError(''); setSuccessMsg(''); }}
                             placeholder="0"
-                            className="w-full bg-[#161B22] border border-[#30363D] focus:border-[#00D26A]/50 rounded-xl py-3 px-4 text-white placeholder:text-[#8B949E] outline-none"
+                            className="w-full bg-[#111820] border border-white/[0.08] focus:border-[#00E676]/40 rounded-[14px] py-3 px-4 text-[#F1F5F9] placeholder:text-[#64748B] outline-none transition-colors"
                         />
                     </div>
                     {amount > 0 && (
@@ -186,14 +186,14 @@ export default function ExchangePage() {
                     <button
                         onClick={handleExchange}
                         disabled={!canExchange}
-                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#00E676] to-[#00C853] text-black rounded-2xl py-3.5 text-sm font-bold transition-all hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                        className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-sm disabled:opacity-50 disabled:pointer-events-none"
                     >
                         {loading ? '...' : t('exchange.exchangeBtn')}
                     </button>
                 </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-5">
+            <div className="bento-card p-5">
                 <div className="flex items-center gap-2 text-[#64748B] text-sm mb-2">
                     <Ticket size={16} />
                     {t('exchange.promoTitle')}
@@ -204,13 +204,13 @@ export default function ExchangePage() {
                         value={promoCode}
                         onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(''); setPromoSuccess(''); }}
                         placeholder={t('exchange.promoPlaceholder')}
-                        className="flex-1 bg-[#161B22] border border-[#30363D] focus:border-[#00D26A]/50 rounded-xl py-2.5 px-3 text-white placeholder:text-[#8B949E] outline-none text-sm uppercase"
+                        className="flex-1 bg-[#111820] border border-white/[0.08] focus:border-[#00E676]/40 rounded-[14px] py-2.5 px-3 text-[#F1F5F9] placeholder:text-[#64748B] outline-none text-sm uppercase transition-colors"
                     />
                     <button
                         type="button"
                         onClick={handleActivatePromo}
                         disabled={!promoCode.trim() || promoLoading}
-                        className="shrink-0 px-4 py-2.5 bg-[#00D26A]/20 text-[#00E676] border border-[#00D26A]/50 rounded-xl text-sm font-semibold hover:bg-[#00D26A]/30 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                        className="btn-secondary shrink-0 px-4 py-2.5 text-sm disabled:opacity-50 disabled:pointer-events-none"
                     >
                         {promoLoading ? '...' : t('exchange.promoActivate')}
                     </button>
@@ -219,8 +219,8 @@ export default function ExchangePage() {
                 {promoSuccess && <p className="text-xs text-[#00E676] mt-2">{promoSuccess}</p>}
             </div>
 
-            <div className="glass-card rounded-2xl p-5">
-                <div className="flex items-center gap-2 text-[#F8FAFC] font-bold mb-3">
+            <div className="bento-card p-5">
+                <div className="flex items-center gap-2 text-[#F1F5F9] font-bold mb-3">
                     <Coins size={18} className="text-[#00E676]" />
                     {t('exchange.yourZyphex')}
                 </div>
@@ -245,7 +245,7 @@ export default function ExchangePage() {
                             const usdAtRate = rate > 0 ? h.amountZyphex * pricePerCoinUsd : 0;
                             const usdLabel = usdAtRate >= 0.01 ? usdAtRate.toFixed(2) : usdAtRate.toFixed(4);
                             return (
-                                <li key={i} className="flex justify-between text-xs bg-[#0D1117] rounded-lg px-3 py-2">
+                                <li key={i} className="flex justify-between text-xs surface-raised rounded-[10px] px-3 py-2">
                                     <span className="text-[#8B949E]">{h.createdAt.slice(0, 16).replace('T', ' ')}</span>
                                     <span className="text-white">
                                         {h.amountUsdt > 0 ? `$${h.amountUsdt.toFixed(2)} → ` : ''}

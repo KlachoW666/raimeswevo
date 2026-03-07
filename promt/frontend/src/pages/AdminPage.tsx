@@ -48,10 +48,7 @@ export default function AdminPage() {
                 <ShieldAlert size={48} className="text-[#FF4444] mb-4" />
                 <h2 className="text-xl font-bold text-white mb-2">Доступ запрещен</h2>
                 <p className="text-[#8B949E] text-sm mb-6">Эта страница доступна только администраторам.</p>
-                <button
-                    onClick={() => navigate(-1)}
-                    className="px-6 py-2.5 bg-[#1C2333] hover:bg-[#30363D] text-white rounded-xl font-semibold transition-colors"
-                >
+                <button onClick={() => navigate(-1)} className="btn-secondary px-6 py-2.5">
                     Вернуться назад
                 </button>
             </div>
@@ -65,13 +62,13 @@ export default function AdminPage() {
                 <div className="space-y-3 animate-in fade-in duration-300">
                     <button
                         onClick={() => setIsUserModalOpen(true)}
-                        className="w-full bg-[#161B22] border border-[#30363D] hover:border-[#00D26A]/50 rounded-xl p-4 flex items-center gap-4 transition-all active:scale-[0.98]"
+                        className="w-full bento-card hover:border-[#00E676]/30 rounded-[14px] p-4 flex items-center gap-4 transition-all active:scale-[0.98]"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-[#00D26A]/10 flex items-center justify-center text-[#00D26A]">
+                        <div className="w-10 h-10 rounded-[14px] bg-[#00E676]/10 flex items-center justify-center text-[#00E676]">
                             <Users size={20} />
                         </div>
                         <div className="text-left">
-                            <div className="text-sm font-bold text-white">Управление пользователями</div>
+                            <div className="text-sm font-bold text-[#F1F5F9]">Управление пользователями</div>
                             <div className="text-[10px] text-[#8B949E]">Поиск, баланс, бан, VIP, заметки</div>
                         </div>
                     </button>
@@ -90,22 +87,21 @@ export default function AdminPage() {
         <div className="flex flex-col h-full animate-in fade-in duration-300">
             {/* Header */}
             <div className="flex items-center gap-3 mb-3 shrink-0">
-                <div className="w-8 h-8 rounded-full bg-[#00D26A] text-black flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-[#00E676] text-black flex items-center justify-center">
                     <ShieldAlert size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-bold text-white tracking-wide leading-tight">{tabNames[activeTab]}</h2>
+                    <h2 className="text-lg font-bold text-[#F1F5F9] tracking-wide leading-tight">{tabNames[activeTab]}</h2>
                     <p className="text-[#8B949E] text-[10px] opacity-80">Панель управления</p>
                 </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex bg-[#161B22] rounded-xl p-1 mb-4 gap-0.5 shrink-0 overflow-x-auto no-scrollbar">
+            <div className="flex bento-card rounded-[14px] p-1 mb-4 gap-0.5 shrink-0 overflow-x-auto no-scrollbar">
                 {tabs.map(({ key, label }) => (
                     <button
                         key={key}
                         onClick={() => setActiveTab(key)}
-                        className={`flex-1 min-w-[40px] py-2 rounded-lg text-sm transition-all ${activeTab === key ? 'bg-[#00D26A] shadow-sm scale-105' : 'hover:bg-[#1C2333]'}`}
+                        className={`flex-1 min-w-[40px] py-2 rounded-[10px] text-sm transition-all ${activeTab === key ? 'btn-primary scale-105' : 'text-[#94A3B8] hover:bg-white/[0.06] hover:text-[#F1F5F9]'}`}
                     >
                         {label}
                     </button>

@@ -32,7 +32,7 @@ export default function AdminAuditLog() {
                     {auditLog.map(entry => {
                         const color = getActionColor(entry.action);
                         return (
-                            <div key={entry.id} className="bg-[#161B22] border border-[#30363D]/50 rounded-xl p-3.5 flex gap-3 group hover:border-[#30363D] transition-colors">
+                            <div key={entry.id} className="bento-card border-white/[0.06] rounded-xl p-3.5 flex gap-3 group hover:border-white/[0.1] transition-colors">
                                 <div className="w-2 rounded-full shrink-0 mt-0.5" style={{ backgroundColor: color, minHeight: '100%' }} />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-0.5">

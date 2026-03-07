@@ -65,7 +65,7 @@ export default function AdminSystemSettings() {
     return (
         <div className="space-y-4 animate-in fade-in duration-300">
             {/* Maintenance Mode */}
-            <div className={`bg-[#161B22] border rounded-xl p-4 transition-colors ${settings.maintenanceMode ? 'border-[#FF6B6B]/50' : 'border-[#30363D]'}`}>
+            <div className={`bg-[#161B22] border rounded-xl p-4 transition-colors ${settings.maintenanceMode ? 'border-[#FF6B6B]/50' : 'border-white/[0.08]'}`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${settings.maintenanceMode ? 'bg-[#FF6B6B]/10 text-[#FF6B6B]' : 'bg-[#00D26A]/10 text-[#00D26A]'}`}>
@@ -78,7 +78,7 @@ export default function AdminSystemSettings() {
                     </div>
                     <button
                         onClick={handleToggleMaintenance}
-                        className={`w-12 h-7 rounded-full transition-all relative ${settings.maintenanceMode ? 'bg-[#FF6B6B]' : 'bg-[#30363D]'}`}
+                        className={`w-12 h-7 rounded-full transition-all relative ${settings.maintenanceMode ? 'bg-[#FF6B6B]' : 'bg-white/[0.08]'}`}
                     >
                         <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all ${settings.maintenanceMode ? 'right-1' : 'left-1'}`} />
                     </button>
@@ -86,7 +86,7 @@ export default function AdminSystemSettings() {
             </div>
 
             {/* Default Language */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[#58A6FF]/10 flex items-center justify-center text-[#58A6FF]">
@@ -99,7 +99,7 @@ export default function AdminSystemSettings() {
                     </div>
                     <button
                         onClick={handleToggleLanguage}
-                        className="px-4 py-2 rounded-xl bg-[#0D1117] border border-[#30363D] text-sm font-bold text-white active:scale-95 transition-transform"
+                        className="px-4 py-2 rounded-xl bg-[#0D1117] border border-white/[0.08] text-sm font-bold text-white active:scale-95 transition-transform"
                     >
                         {settings.defaultLanguage === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN'}
                     </button>
@@ -107,7 +107,7 @@ export default function AdminSystemSettings() {
             </div>
 
             {/* Admin Management */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-4">
                     <ShieldAlert size={16} className="text-[#F0883E]" />
                     <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider">Управление админами</h4>
@@ -115,7 +115,7 @@ export default function AdminSystemSettings() {
 
                 <div className="space-y-2 mb-3">
                     {CONFIG.ADMIN_IDS.map(id => (
-                        <div key={id} className="flex items-center justify-between bg-[#0D1117] rounded-lg px-3 py-2.5 border border-[#30363D]/30">
+                        <div key={id} className="flex items-center justify-between bg-[#0D1117] rounded-lg px-3 py-2.5 border border-white/[0.08]/30">
                             <span className="text-sm text-white font-mono">{id}</span>
                             <button
                                 onClick={() => handleRemoveAdmin(id)}
@@ -133,7 +133,7 @@ export default function AdminSystemSettings() {
                         value={newAdminId}
                         onChange={e => setNewAdminId(e.target.value)}
                         placeholder="Telegram ID..."
-                        className="flex-1 bg-[#0D1117] border border-[#30363D] rounded-lg px-3 py-2 text-white text-sm font-mono placeholder:text-[#8B949E]/50 outline-none focus:border-[#00D26A]/50 transition-colors"
+                        className="flex-1 bg-[#0D1117] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm font-mono placeholder:text-[#8B949E]/50 outline-none focus:border-[#00D26A]/50 transition-colors"
                     />
                     <button
                         onClick={handleAddAdmin}
@@ -148,7 +148,7 @@ export default function AdminSystemSettings() {
             {/* Export Data */}
             <button
                 onClick={handleExportCSV}
-                className="w-full bg-[#161B22] border border-[#30363D] hover:border-[#00D26A]/50 rounded-xl p-4 flex items-center gap-4 transition-all active:scale-[0.98]"
+                className="w-full bento-card hover:border-[#00D26A]/50 rounded-xl p-4 flex items-center gap-4 transition-all active:scale-[0.98]"
             >
                 <div className="w-10 h-10 rounded-xl bg-[#00D26A]/10 flex items-center justify-center text-[#00D26A]">
                     <Download size={20} />

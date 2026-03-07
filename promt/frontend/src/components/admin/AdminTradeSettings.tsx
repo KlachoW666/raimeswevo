@@ -17,9 +17,9 @@ export default function AdminTradeSettings() {
     return (
         <div className="space-y-4 animate-in fade-in duration-300">
             {/* Global Settings */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Settings size={16} className="text-[#00D26A]" />
+                    <Settings size={16} className="text-[#00E676]" />
                     <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider">Глобальные параметры</h4>
                 </div>
 
@@ -66,7 +66,7 @@ export default function AdminTradeSettings() {
             </div>
 
             {/* Winrate by Mode */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-4">
                     <BarChart3 size={16} className="text-[#58A6FF]" />
                     <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider">Винрейт по режимам</h4>
@@ -79,7 +79,7 @@ export default function AdminTradeSettings() {
             </div>
 
             {/* Trading Schedule */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-4">
                     <Clock size={16} className="text-[#F0883E]" />
                     <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider">Расписание торговли</h4>
@@ -91,7 +91,7 @@ export default function AdminTradeSettings() {
                             type="time"
                             value={settings.tradingSchedule.start}
                             onChange={e => updateSettings({ tradingSchedule: { ...settings.tradingSchedule, start: e.target.value } })}
-                            className="w-full bg-[#0D1117] border border-[#30363D] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#00D26A] transition-colors"
+                            className="w-full bg-[#0D1117] border border-[#30363D] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#00E676] transition-colors"
                         />
                     </div>
                     <div>
@@ -100,14 +100,14 @@ export default function AdminTradeSettings() {
                             type="time"
                             value={settings.tradingSchedule.end}
                             onChange={e => updateSettings({ tradingSchedule: { ...settings.tradingSchedule, end: e.target.value } })}
-                            className="w-full bg-[#0D1117] border border-[#30363D] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#00D26A] transition-colors"
+                            className="w-full bg-[#0D1117] border border-[#30363D] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#00E676] transition-colors"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Trading Pairs */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <Zap size={16} className="text-[#F778BA]" />
@@ -125,7 +125,7 @@ export default function AdminTradeSettings() {
                                     togglePair(pair);
                                     hapticFeedback?.selectionChanged();
                                 }}
-                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${enabled ? 'bg-[#00D26A]/20 text-[#00D26A] border border-[#00D26A]/30' : 'bg-[#0D1117] text-[#8B949E]/50 border border-[#30363D]/30'}`}
+                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${enabled ? 'bg-[#00E676]/20 text-[#00E676] border border-[#00E676]/30' : 'bg-[#0D1117] text-[#8B949E]/50 border border-[#30363D]/30'}`}
                             >
                                 {pair}
                             </button>
@@ -142,7 +142,7 @@ function SliderRow({ label, value, min, max, step = 1, suffix = '', onChange }: 
         <div>
             <div className="flex justify-between items-center mb-1.5">
                 <span className="text-xs text-[#8B949E]">{label}</span>
-                <span className="text-sm font-bold text-[#00D26A] font-mono">{value}{suffix}</span>
+                <span className="text-sm font-bold text-[#00E676] font-mono">{value}{suffix}</span>
             </div>
             <input
                 type="range"
@@ -151,7 +151,7 @@ function SliderRow({ label, value, min, max, step = 1, suffix = '', onChange }: 
                 step={step}
                 value={value}
                 onChange={e => onChange(Number(e.target.value))}
-                className="w-full h-1.5 bg-[#30363D] rounded-full appearance-none cursor-pointer accent-[#00D26A]"
+                className="w-full h-1.5 bg-[#30363D] rounded-full appearance-none cursor-pointer accent-[#00E676]"
             />
         </div>
     );

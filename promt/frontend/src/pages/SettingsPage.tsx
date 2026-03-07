@@ -82,10 +82,10 @@ export default function SettingsPage() {
             {/* Account */}
             <section>
                 <h3 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-3">{t('settings.account')}</h3>
-                <div className="glass-card rounded-xl p-4 flex justify-between items-center">
+                <div className="bento-card rounded-[14px] p-4 flex justify-between items-center">
                     <div>
                         <div className="text-[#64748B] text-xs font-bold uppercase mb-1">{t('settings.userId')}</div>
-                        <div className="font-mono text-[#F8FAFC] text-sm">{userId}</div>
+                        <div className="font-mono text-[#F1F5F9] text-sm">{userId}</div>
                     </div>
                     <button className="text-[#00E676] text-sm font-semibold hover:underline transition-colors">{t('settings.changePin')}</button>
                 </div>
@@ -115,21 +115,15 @@ export default function SettingsPage() {
                 <h3 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-3 flex items-center gap-2">
                     <Globe size={14} /> {t('settings.language')}
                 </h3>
-                <div className="flex glass-card rounded-xl overflow-hidden p-1">
+                <div className="flex bento-card rounded-[14px] overflow-hidden p-1">
                     <button
-                        className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-300 ${language === 'en'
-                            ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black shadow-[0_2px_10px_rgba(0,230,118,0.2)]'
-                            : 'text-[#64748B] hover:text-[#94A3B8]'
-                            }`}
+                        className={`flex-1 py-2.5 text-sm font-bold rounded-[10px] transition-all duration-200 ${language === 'en' ? 'btn-primary' : 'text-[#64748B] hover:text-[#94A3B8]'}`}
                         onClick={() => handleLangChange('en')}
                     >
                         English
                     </button>
                     <button
-                        className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-300 ${language === 'ru'
-                            ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black shadow-[0_2px_10px_rgba(0,230,118,0.2)]'
-                            : 'text-[#64748B] hover:text-[#94A3B8]'
-                            }`}
+                        className={`flex-1 py-2.5 text-sm font-bold rounded-[10px] transition-all duration-200 ${language === 'ru' ? 'btn-primary' : 'text-[#64748B] hover:text-[#94A3B8]'}`}
                         onClick={() => handleLangChange('ru')}
                     >
                         Русский
@@ -140,14 +134,12 @@ export default function SettingsPage() {
             {/* Danger Zone */}
             <section>
                 <h3 className="text-[11px] font-bold text-[#FF5252] uppercase tracking-wider mb-3">{t('settings.dangerZone')}</h3>
-                <div className="glass-card rounded-xl p-4 border-[#FF5252]/10 space-y-3">
-                    <div className="text-xs text-[#64748B] leading-relaxed">
-                        {t('settings.resetDesc')}
-                    </div>
+                <div className="bento-card rounded-[14px] p-4 border-[#FF5252]/10 space-y-3">
+                    <div className="text-xs text-[#64748B] leading-relaxed">{t('settings.resetDesc')}</div>
                     <button
                         onClick={handleReset}
                         disabled={resetting || loggingOut}
-                        className="w-full flex items-center justify-center gap-2 glass-card border-[#00E676]/30 text-[#00E676] rounded-xl py-3.5 font-semibold transition-all hover:bg-[#00E676]/[0.06] active:scale-95 disabled:opacity-40"
+                        className="btn-secondary w-full flex items-center justify-center gap-2 border-[#00E676]/30 text-[#00E676] py-3.5 disabled:opacity-40"
                     >
                         {resetting ? <Loader2 className="animate-spin" size={16} /> : <RefreshCcw size={16} />}
                         {t('settings.resetBtn')}
@@ -155,7 +147,7 @@ export default function SettingsPage() {
                     <button
                         onClick={handleLogout}
                         disabled={resetting || loggingOut}
-                        className="w-full flex items-center justify-center gap-2 glass-card border-[#FF5252]/30 text-[#FF5252] rounded-xl py-3.5 font-semibold transition-all hover:bg-[#FF5252]/[0.06] active:scale-95 disabled:opacity-40"
+                        className="btn-secondary w-full flex items-center justify-center gap-2 border-[#FF5252]/30 text-[#FF5252] py-3.5 disabled:opacity-40"
                     >
                         {loggingOut ? <Loader2 className="animate-spin" size={16} /> : <LogOut size={16} />}
                         {t('settings.logout')}
@@ -170,7 +162,7 @@ export default function SettingsPage() {
                             hapticFeedback?.impactOccurred('light');
                             navigate('/admin');
                         }}
-                        className="w-full glass-card border-[#00E676]/20 hover:border-[#00E676]/40 rounded-xl p-4 flex items-center gap-4 transition-all group active:scale-[0.98]"
+                        className="w-full bento-card border-[#00E676]/20 hover:border-[#00E676]/40 rounded-[14px] p-4 flex items-center gap-4 transition-all group active:scale-[0.98]"
                     >
                         <div className="w-11 h-11 rounded-xl bg-[#00E676]/10 flex items-center justify-center text-[#00E676] group-hover:bg-[#00E676]/15 transition-all animate-pulse-glow">
                             <ShieldAlert size={20} />
@@ -187,15 +179,13 @@ function ModeCard({ title, desc, icon: Icon, active, onClick, accents }: any) {
     return (
         <div
             onClick={onClick}
-            className={`glass-card rounded-xl p-4 flex items-center gap-4 cursor-pointer transition-all duration-300 active:scale-[0.98] ${active ? `${accents.borderClass} ${accents.glowClass}` : 'border-white/[0.06]'
-                }`}
+            className={`bento-card rounded-[14px] p-4 flex items-center gap-4 cursor-pointer transition-all duration-200 active:scale-[0.98] ${active ? `${accents.borderClass} ${accents.glowClass}` : 'border-white/[0.06]'}`}
         >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${active ? `${accents.bgClass} text-black` : 'bg-[#151A28] text-[#64748B]'
-                }`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${active ? `${accents.bgClass} text-black` : 'bg-[#111820] text-[#64748B]'}`}>
                 <Icon size={20} />
             </div>
             <div className="flex-1">
-                <div className={`text-sm font-semibold mb-1 transition-colors duration-200 ${active ? 'text-[#F8FAFC]' : 'text-[#94A3B8]'}`}>{title}</div>
+                <div className={`text-sm font-semibold mb-1 transition-colors duration-200 ${active ? 'text-[#F1F5F9]' : 'text-[#94A3B8]'}`}>{title}</div>
                 <div className="text-[10px] text-[#64748B]">{desc}</div>
             </div>
             {active && (

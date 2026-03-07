@@ -168,9 +168,9 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-[#0D1117] flex flex-col animate-in slide-in-from-bottom-full duration-300" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="fixed inset-0 z-[100] bg-[#0A0E16] flex flex-col animate-in slide-in-from-bottom-full duration-300" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-[#30363D]/50 bg-[#161B22]/80 backdrop-blur-md shrink-0">
+            <div className="flex items-center justify-between p-4 border-b border-white/[0.06] surface-overlay shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                     <button
                         onClick={selectedUser ? () => setSelectedUser(null) : onClose}
@@ -210,7 +210,7 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                                     placeholder="Поиск по имени или ID..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-[#161B22] border border-[#30363D] focus:border-[#00D26A]/50 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-[#8B949E] outline-none transition-colors"
+                                    className="w-full bg-[#111820] border border-white/[0.08] focus:border-[#00E676]/40 rounded-[14px] py-3 pl-11 pr-4 text-[#F1F5F9] placeholder:text-[#64748B] outline-none transition-colors"
                                 />
                             </div>
                             <label className="flex items-center gap-2 text-sm text-[#8B949E] cursor-pointer">
@@ -218,7 +218,7 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                                     type="checkbox"
                                     checked={onlyRegistered}
                                     onChange={(e) => setOnlyRegistered(e.target.checked)}
-                                    className="rounded border-[#30363D] bg-[#161B22] text-[#00D26A] focus:ring-[#00D26A]"
+                                    className="rounded-[10px] border-white/[0.08] bg-[#111820] text-[#00E676] focus:ring-[#00E676]/40"
                                 />
                                 Только зарегистрированные
                             </label>
@@ -231,14 +231,14 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                             ) : listError ? (
                                 <div className="text-center py-10 px-4">
                                     <p className="text-[#94A3B8] text-sm mb-3">Не удалось загрузить список. Проверьте интернет.</p>
-                                    <button type="button" onClick={refetchList} className="px-5 py-2.5 rounded-xl bg-[#00E676] text-black font-semibold">Повторить</button>
+                                    <button type="button" onClick={refetchList} className="btn-primary px-5 py-2.5">Повторить</button>
                                 </div>
                             ) : (
                                 filteredUsers.map(user => (
                                     <div
                                         key={user.id}
                                         onClick={() => setSelectedUser(user)}
-                                        className="bg-[#161B22] border border-[#30363D] hover:border-[#00D26A]/50 rounded-xl p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
+                                        className="bento-card hover:border-[#00E676]/30 rounded-[14px] p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
                                     >
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
@@ -265,14 +265,14 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                     /* User Details */
                     <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
                         {/* Profile Card */}
-                        <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-5 text-center">
-                            <div className="w-16 h-16 bg-[#1C2333] rounded-full mx-auto mb-3 flex items-center justify-center border-2 border-[#30363D]">
+                        <div className="bento-card rounded-[14px] p-5 text-center">
+                            <div className="w-16 h-16 bg-[#111820] rounded-full mx-auto mb-3 flex items-center justify-center border-2 border-white/[0.08]">
                                 {selectedUser.isBanned ? <Ban className="text-[#FF4444]" size={28} /> : <UserCheck className="text-[#00D26A]" size={28} />}
                             </div>
                             <h3 className="text-xl font-bold text-white mb-0.5">{selectedUser.name}</h3>
                             <p className="text-xs text-[#8B949E] font-mono mb-3">{selectedUser.id}</p>
 
-                            <div className="inline-flex flex-col items-center bg-[#0D1117] rounded-xl py-2.5 px-6 border border-[#30363D]">
+                            <div className="inline-flex flex-col items-center surface-raised rounded-[14px] py-2.5 px-6">
                                 <span className="text-[10px] font-bold text-[#8B949E] uppercase">Баланс</span>
                                 <span className="text-2xl font-bold text-[#00D26A]">${selectedUser.balance.toFixed(2)}</span>
                             </div>
@@ -280,23 +280,23 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
 
                         {/* Stats Grid */}
                         <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-3 text-center">
+                            <div className="bento-card rounded-[14px] p-3 text-center">
                                 <div className="text-xs font-bold text-[#00D26A] font-mono">${selectedUser.totalDeposited}</div>
                                 <div className="text-[9px] text-[#8B949E] uppercase mt-0.5">Депозиты</div>
                             </div>
-                            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-3 text-center">
+                            <div className="bento-card rounded-[14px] p-3 text-center">
                                 <div className="text-xs font-bold text-[#FF6B6B] font-mono">${selectedUser.totalWithdrawn}</div>
                                 <div className="text-[9px] text-[#8B949E] uppercase mt-0.5">Выводы</div>
                             </div>
-                            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-3 text-center">
+                            <div className="bento-card rounded-[14px] p-3 text-center">
                                 <div className="text-xs font-bold text-white font-mono">{selectedUser.referralCount}</div>
                                 <div className="text-[9px] text-[#8B949E] uppercase mt-0.5">Рефералы</div>
                             </div>
                         </div>
 
                         {/* Info Row */}
-                        <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-3">
-                            <div className="grid grid-cols-3 text-center divide-x divide-[#30363D]">
+                        <div className="bento-card rounded-[14px] p-3">
+                            <div className="grid grid-cols-3 text-center divide-x divide-white/[0.08]">
                                 <div>
                                     <div className="text-[10px] text-[#8B949E]">Режим</div>
                                     <div className="text-xs font-bold text-white capitalize">{selectedUser.botMode}</div>
@@ -314,7 +314,7 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
 
                         {/* Notes */}
                         {selectedUser.notes && (
-                            <div className="bg-[#161B22] border border-[#30363D]/50 rounded-xl p-3">
+                            <div className="bento-card rounded-[14px] p-3">
                                 <div className="text-[10px] text-[#8B949E] uppercase font-bold mb-1">Заметка</div>
                                 <div className="text-xs text-white">{selectedUser.notes}</div>
                             </div>
@@ -323,7 +323,7 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
                         {/* Actions — only for registered users */}
                         <div className="space-y-2">
                             {selectedUser.registered === false ? (
-                                <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4 text-center text-[#8B949E] text-sm">
+                                <div className="bento-card rounded-[14px] p-4 text-center text-[#8B949E] text-sm">
                                     Только открыл приложение. Действия доступны после регистрации в боте.
                                 </div>
                             ) : (
@@ -350,20 +350,20 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
             {/* Модалка ввода (вместо prompt — работает на телефоне) */}
             {promptState && (
                 <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60" onClick={() => setPromptState(null)}>
-                    <div className="w-full max-w-sm bg-[#161B22] border border-[#30363D] rounded-2xl p-5 shadow-xl" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-[15px] font-bold text-white mb-3">{promptState.title}</h3>
-                        <input
-                            type={promptState.type === 'notes' ? 'text' : 'number'}
-                            inputMode={promptState.type === 'notes' ? 'text' : 'decimal'}
-                            value={promptInput}
-                            onChange={e => setPromptInput(e.target.value)}
-                            placeholder={promptState.placeholder}
-                            className="w-full px-4 py-3 rounded-xl bg-[#0D1117] border border-[#30363D] text-white text-base mb-4"
-                            autoFocus
-                        />
-                        <div className="flex gap-2">
-                            <button type="button" onClick={() => setPromptState(null)} className="flex-1 py-2.5 rounded-xl bg-[#30363D] text-white font-semibold">Отмена</button>
-                            <button type="button" onClick={() => submitPrompt(promptInput)} className="flex-1 py-2.5 rounded-xl bg-[#00E676] text-black font-semibold">Сохранить</button>
+<div className="w-full max-w-sm surface-floating rounded-[18px] p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+                            <h3 className="text-[15px] font-bold text-[#F1F5F9] mb-3">{promptState.title}</h3>
+                            <input
+                                type={promptState.type === 'notes' ? 'text' : 'number'}
+                                inputMode={promptState.type === 'notes' ? 'text' : 'decimal'}
+                                value={promptInput}
+                                onChange={e => setPromptInput(e.target.value)}
+                                placeholder={promptState.placeholder}
+                                className="w-full px-4 py-3 rounded-[14px] bg-[#111820] border border-white/[0.08] text-[#F1F5F9] text-base mb-4 outline-none focus:border-[#00E676]/40"
+                                autoFocus
+                            />
+                            <div className="flex gap-2">
+                            <button type="button" onClick={() => setPromptState(null)} className="btn-secondary flex-1 py-2.5">Отмена</button>
+                            <button type="button" onClick={() => submitPrompt(promptInput)} className="btn-primary flex-1 py-2.5">Сохранить</button>
                         </div>
                     </div>
                 </div>
@@ -372,11 +372,11 @@ export default function UserManagementModal({ isOpen, onClose }: Props) {
             {/* Подтверждение сброса баланса */}
             {confirmReset && selectedUser && (
                 <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60" onClick={() => setConfirmReset(false)}>
-                    <div className="w-full max-w-sm bg-[#161B22] border border-[#30363D] rounded-2xl p-5 shadow-xl" onClick={e => e.stopPropagation()}>
-                        <p className="text-white mb-4">Сбросить баланс {selectedUser.name} до $0?</p>
+                    <div className="w-full max-w-sm surface-floating rounded-[18px] p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <p className="text-[#F1F5F9] mb-4">Сбросить баланс {selectedUser.name} до $0?</p>
                         <div className="flex gap-2">
-                            <button type="button" onClick={() => setConfirmReset(false)} className="flex-1 py-2.5 rounded-xl bg-[#30363D] text-white font-semibold">Нет</button>
-                            <button type="button" onClick={doResetBalance} className="flex-1 py-2.5 rounded-xl bg-[#FF6B6B] text-white font-semibold">Да, сбросить</button>
+                            <button type="button" onClick={() => setConfirmReset(false)} className="btn-secondary flex-1 py-2.5">Нет</button>
+                            <button type="button" onClick={doResetBalance} className="flex-1 py-2.5 rounded-[14px] bg-[#FF6B6B] text-white font-semibold hover:brightness-110 active:scale-[0.98]">Да, сбросить</button>
                         </div>
                     </div>
                 </div>
@@ -389,7 +389,7 @@ function ActionButton({ icon: Icon, label, onClick, color }: { icon: any; label:
     return (
         <button
             onClick={onClick}
-            className="w-full bg-[#161B22] border border-[#30363D] hover:border-opacity-80 rounded-xl p-3.5 flex items-center gap-3 transition-all active:scale-[0.98]"
+            className="w-full bento-card hover:border-[#00E676]/30 rounded-[14px] p-3.5 flex items-center gap-3 transition-all active:scale-[0.98]"
             style={{ borderColor: `${color}30` }}
         >
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}15` }}>

@@ -57,7 +57,7 @@ export default function AdminBroadcast() {
     return (
         <div className="space-y-4 animate-in fade-in duration-300">
             {/* Compose */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider mb-3">Новая рассылка</h4>
 
                 {/* Audience Selection */}
@@ -66,7 +66,7 @@ export default function AdminBroadcast() {
                         <button
                             key={key}
                             onClick={() => { setAudience(key); hapticFeedback?.selectionChanged(); }}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold transition-all ${audience === key ? 'bg-[#00D26A] text-black' : 'bg-[#0D1117] text-[#8B949E] border border-[#30363D]'}`}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold transition-all ${audience === key ? 'btn-primary' : 'bg-[#111820] text-[#8B949E] border border-white/[0.08]'}`}
                         >
                             <Icon size={12} />
                             {label}
@@ -84,12 +84,12 @@ export default function AdminBroadcast() {
                     onChange={e => setMessage(e.target.value)}
                     placeholder="Введите текст рассылки..."
                     rows={4}
-                    className="w-full bg-[#0D1117] border border-[#30363D] focus:border-[#00D26A]/50 rounded-xl p-3 text-white text-sm placeholder:text-[#8B949E]/50 outline-none resize-none transition-colors"
+                    className="w-full bg-[#111820] border border-white/[0.08] focus:border-[#00E676]/50 rounded-xl p-3 text-white text-sm placeholder:text-[#8B949E]/50 outline-none resize-none transition-colors"
                 />
 
                 {/* Preview */}
                 {message.trim() && (
-                    <div className="mt-3 p-3 bg-[#0D1117] rounded-lg border border-[#30363D]/50">
+                    <div className="mt-3 p-3 bg-[#0D1117] rounded-lg border border-white/[0.06]">
                         <div className="text-[10px] text-[#8B949E] uppercase font-bold mb-1">Предпросмотр</div>
                         <div className="text-sm text-white whitespace-pre-wrap">{message}</div>
                     </div>
@@ -98,7 +98,7 @@ export default function AdminBroadcast() {
                 <button
                     onClick={handleSend}
                     disabled={!message.trim() || sending}
-                    className="w-full mt-4 py-3 rounded-xl bg-[#00D26A] text-black font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:active:scale-100"
+                    className="w-full mt-4 py-3 rounded-xl bg-[#00E676] text-black font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:active:scale-100"
                 >
                     <Send size={16} />
                     {sending ? 'Отправка...' : 'Отправить рассылку'}
@@ -106,7 +106,7 @@ export default function AdminBroadcast() {
             </div>
 
             {/* History */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider mb-3">
                     <Clock size={12} className="inline mr-1" />
                     История рассылок
@@ -116,10 +116,10 @@ export default function AdminBroadcast() {
                 ) : (
                     <div className="space-y-2">
                         {broadcasts.map(b => (
-                            <div key={b.id} className="bg-[#0D1117] rounded-lg p-3 border border-[#30363D]/30">
+                            <div key={b.id} className="bg-[#0D1117] rounded-lg p-3 border border-white/[0.06]">
                                 <div className="flex justify-between items-start mb-1.5">
                                     <span className="text-[10px] text-[#8B949E]">{b.sentAt || b.createdAt?.slice(0, 16).replace('T', ' ')}</span>
-                                    <span className="text-[10px] bg-[#00D26A]/10 text-[#00D26A] px-2 py-0.5 rounded font-bold">
+                                    <span className="text-[10px] bg-[#00E676]/10 text-[#00E676] px-2 py-0.5 rounded font-bold">
                                         {b.recipientCount} получ.
                                     </span>
                                 </div>

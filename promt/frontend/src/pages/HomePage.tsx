@@ -1,5 +1,5 @@
 import { useState, useEffect, memo } from 'react';
-import { Zap, Clock, Activity, Coins } from 'lucide-react';
+import { Zap, Clock, Activity, Coins, ArrowDownLeft, ArrowUpRight, Wallet } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTradeStore } from '../store/tradeStore';
 import type { Trade } from '../store/tradeStore';
@@ -7,6 +7,7 @@ import { CONFIG } from '../config';
 import { MockAPI } from '../api/mockServices';
 import { useWalletStore } from '../store/walletStore';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrency } from '../utils/formatters';
 
 const TradeRow = memo(function TradeRow({ trade, index }: { trade: Trade; index: number }) {
   return (
@@ -52,7 +53,6 @@ export default function HomePage() {
         MockAPI.getZyphexRate().then((r) => setWevoxRate(typeof r === 'object' && r && 'rate' in r ? r.rate : null)).catch(() => setWevoxRate(null));
     }, []);
 
-    // Single 1s interval for listing countdown and boost timer
     useEffect(() => {
         const listingEnd = new Date(CONFIG.WEVOX_LISTING_DATE).getTime();
         const tick = () => {
@@ -86,138 +86,145 @@ export default function HomePage() {
     const isBoostActive = boostEndTime !== null && Date.now() < boostEndTime;
 
     return (
-        <div className="space-y-4 pb-4 stagger-children">
-            {/* Boost Section */}
-            <section className="glass-card rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                    <Zap size={16} className="text-[#64748B]" />
-                    <span className="text-sm font-semibold text-[#8B949E]">Буст: 10% в день</span>
+        <div className="space-y-5 pb-4 stagger-children">
+            {/* Bento: Balance + quick actions | Boost | % per day */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="sm:col-span-2 bento-card p-4 flex flex-col justify-between min-h-[100px]">
+                    <div className="flex items-center gap-2 text-[#64748B] text-xs font-semibold uppercase tracking-wider">
+                        <Wallet size={14} />
+                        Баланс
+                    </div>
+                    <div className="text-2xl font-bold text-[#00E676] font-mono tabular-nums mt-1 text-shadow-green">
+                        {formatCurrency(totalUsd)}
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                        <button
+                            onClick={() => navigate('/wallet')}
+                            className="btn-primary flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm"
+                        >
+                            <ArrowDownLeft size={14} />
+                            Пополнить
+                        </button>
+                        <button
+                            onClick={() => navigate('/wallet')}
+                            className="btn-secondary flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm"
+                        >
+                            <ArrowUpRight size={14} />
+                            Вывести
+                        </button>
+                    </div>
                 </div>
-                <p className="text-[11px] text-[#64748B] mb-3 leading-relaxed">
-                    10% в день на 3 ч, затем снова 5%. Нажмите снова через 3 ч.
-                </p>
-                <button
-                    onClick={() => { if (!isBoostActive) activateBoost() }}
-                    disabled={isBoostActive}
-                    className="w-full bg-[#162220] border border-[#00E676]/20 text-[#00E676] disabled:opacity-50 disabled:text-[#00E676]/50 hover:bg-[#1E2D2B] transition-colors py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2"
-                >
-                    {isBoostActive ? `Буст активен (${boostTimeLeft})` : 'Включить 10% на 3 ч'}
-                </button>
-            </section>
+                <div className="bento-card p-4 flex flex-col">
+                    <div className="flex items-center gap-1.5 text-[#64748B] mb-1">
+                        <Zap size={14} />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Буст</span>
+                    </div>
+                    <p className="text-[10px] text-[#64748B] mb-2 leading-relaxed">10% на 3 ч</p>
+                    <button
+                        onClick={() => { if (!isBoostActive) activateBoost(); }}
+                        disabled={isBoostActive}
+                        className="mt-auto w-full py-2 rounded-[10px] text-xs font-semibold bg-[#00E676]/10 border border-[#00E676]/25 text-[#00E676] disabled:opacity-50 transition-all active:scale-[0.98]"
+                    >
+                        {isBoostActive ? boostTimeLeft ?? '…' : 'Включить'}
+                    </button>
+                </div>
+                <div className="bento-card p-4 flex flex-col justify-center">
+                    <div className="flex items-center gap-1.5 text-[#64748B] mb-1">
+                        <Activity size={14} />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">В день</span>
+                    </div>
+                    <div className="text-xl font-bold text-[#00E676] font-mono">~{isBoostActive ? '10' : '5'}%</div>
+                    <p className="text-[10px] text-[#64748B] mt-0.5">от торговли</p>
+                </div>
+            </div>
 
-            {/* Daily Profit Section */}
-            <section className="glass-card rounded-2xl p-4 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-2">
-                    <Activity size={16} className="text-[#64748B]" />
-                    <span className="text-sm font-semibold text-[#8B949E]">Прибыль в день</span>
-                </div>
-                <div className="text-2xl font-bold text-[#00E676] mb-1">
-                    ~{isBoostActive ? '10' : '5'}%
-                </div>
-                <p className="text-[11px] text-[#64748B]">
-                    Около {isBoostActive ? '10' : '5'}% в день от торговли (зависит от рынка).
-                </p>
-            </section>
-
-            {/* Trading Toggle Header */}
-            <div className="flex justify-between items-center px-1 border-b border-white/[0.06] pb-2">
-                <div className="flex items-center gap-2 font-bold text-[13px]">
-                    <span className={isTradingActive ? 'text-[#00E676]' : 'text-[#FF5252]'}>
-                        Торговля: {isTradingActive ? 'вкл' : 'выкл'}
-                    </span>
-                </div>
+            {/* Trading toggle strip */}
+            <div className="flex justify-between items-center px-1">
+                <span className={`font-bold text-[13px] ${isTradingActive ? 'text-[#00E676]' : 'text-[#FF5252]'}`}>
+                    Торговля: {isTradingActive ? 'вкл' : 'выкл'}
+                </span>
                 <button
                     onClick={toggleTrading}
-                    className="text-[12px] font-medium px-3 py-1.5 rounded-lg bg-[#1A1F2A] hover:bg-[#2A3140] text-white transition-colors border border-white/5"
+                    className="btn-secondary text-[12px] font-medium px-3 py-1.5"
                 >
-                    {isTradingActive ? 'Остановить торговлю' : 'Запустить торговлю'}
+                    {isTradingActive ? 'Остановить' : 'Запустить'}
                 </button>
             </div>
 
-            {/* Trades Live Section */}
-            <section className="glass-card rounded-2xl overflow-hidden relative">
+            {/* Trades block */}
+            <section className="bento-card overflow-hidden">
                 <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2">
-                    <span className="font-bold text-white text-[15px]">Сделки</span>
+                    <span className="font-bold text-[#F1F5F9] text-[15px]">Сделки</span>
                 </div>
                 {totalUsd === 0 && totalDeposited === 0 && (
-                    <div className="absolute inset-0 top-[48px] z-10 bg-[#162220]/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center border-t border-white/[0.02]">
+                    <div className="flex flex-col items-center justify-center p-8 text-center bg-[#0F1419]/80 border-t border-white/[0.04]">
                         <h3 className="text-[#00E676] font-bold mb-2">Пополните баланс для торговли</h3>
-                        <p className="text-[#8B949E] text-xs mb-4">Баланс $0. Пополните счет, чтобы начать торговлю.</p>
-                        <button
-                            onClick={() => navigate('/wallet')}
-                            className="bg-[#00E676] hover:bg-[#00C853] text-black font-bold py-2.5 px-6 rounded-xl text-sm transition-transform active:scale-95 shadow-[0_4px_10px_rgba(0,230,118,0.2)]"
-                        >
+                        <p className="text-[#94A3B8] text-xs mb-4">Баланс $0. Пополните счёт, чтобы начать.</p>
+                        <button onClick={() => navigate('/wallet')} className="btn-primary py-2.5 px-6 text-sm">
                             Пополнить
                         </button>
                     </div>
                 )}
-
-                <div className="grid grid-cols-[1fr_1fr_2fr] gap-2 px-4 py-3 border-b border-white/[0.06] text-[10px] font-bold uppercase text-[#64748B] tracking-wider relative z-0">
+                <div className="grid grid-cols-[1fr_1fr_2fr] gap-2 px-4 py-3 border-b border-white/[0.06] text-[10px] font-bold uppercase text-[#64748B] tracking-wider">
                     <span>{t('home.time')}</span>
                     <span>{t('home.pair')}</span>
                     <span>{t('home.pnl')}</span>
                 </div>
                 <div className="max-h-[240px] overflow-y-auto thin-scrollbar">
-                    {trades.length === 0 ? (
-                        <div className="px-4 py-8 text-center text-[#64748B] text-sm">
-                            {t('home.noTrades')}
-                        </div>
+                    {trades.length === 0 && (totalUsd > 0 || totalDeposited > 0) ? (
+                        <div className="px-4 py-8 text-center text-[#64748B] text-sm">{t('home.noTrades')}</div>
                     ) : (
-                        trades.map((trade, i) => (
-                            <TradeRow key={trade.id} trade={trade} index={i} />
-                        ))
+                        trades.map((trade, i) => <TradeRow key={trade.id} trade={trade} index={i} />)
                     )}
                 </div>
             </section>
 
-            {/* Speed Section */}
+            {/* Speed: two stat-cards + strip */}
             <section>
                 <div className="flex items-center gap-2 mb-3">
-                    <div className="w-7 h-7 rounded-lg bg-[#00E676]/10 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-[10px] bg-[#00E676]/10 flex items-center justify-center">
                         <Zap className="w-4 h-4 text-[#00E676]" />
                     </div>
-                    <h2 className="text-lg font-semibold text-[#F8FAFC]">{t('home.speed')}</h2>
+                    <h2 className="text-base font-semibold text-[#F1F5F9]">{t('home.speed')}</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="glass-card rounded-2xl p-4">
+                    <div className="stat-card">
                         <div className="flex items-center gap-2 text-[#64748B] mb-2">
-                            <div className="w-6 h-6 rounded-md bg-[#60A5FA]/10 flex items-center justify-center">
+                            <div className="w-6 h-6 rounded-[8px] bg-[#60A5FA]/10 flex items-center justify-center">
                                 <Clock size={12} className="text-[#60A5FA]" />
                             </div>
                             <span className="text-[10px] font-bold uppercase tracking-wider">{t('home.delay')}</span>
                         </div>
-                        <div className="text-[#F8FAFC] font-mono text-lg tabular-nums">~{metrics.latencyNs} {t('home.ns')}</div>
+                        <div className="text-[#F1F5F9] font-mono text-lg tabular-nums">~{metrics.latencyNs} {t('home.ns')}</div>
                         <div className="text-[10px] text-[#64748B] mt-1">{t('home.execSub')}</div>
                     </div>
-                    <div className="glass-card rounded-2xl p-4">
+                    <div className="stat-card">
                         <div className="flex items-center gap-2 text-[#64748B] mb-2">
-                            <div className="w-6 h-6 rounded-md bg-[#A78BFA]/10 flex items-center justify-center">
+                            <div className="w-6 h-6 rounded-[8px] bg-[#A78BFA]/10 flex items-center justify-center">
                                 <Activity size={12} className="text-[#A78BFA]" />
                             </div>
                             <span className="text-[10px] font-bold uppercase tracking-wider">{t('home.executionsTitle')}</span>
                         </div>
-                        <div className="text-[#F8FAFC] font-mono text-lg tabular-nums">{metrics.executionsSession}</div>
+                        <div className="text-[#F1F5F9] font-mono text-lg tabular-nums">{metrics.executionsSession}</div>
                         <div className="text-[10px] text-[#64748B] mt-1">{t('home.perSession')}</div>
                     </div>
                 </div>
-                <div className="mt-3 px-4 py-3 glass-card glow-green rounded-xl text-[#00E676] text-sm font-medium flex items-center justify-between">
+                <div className="mt-3 px-4 py-3 surface-raised glow-green rounded-[14px] text-[#00E676] text-sm font-medium flex items-center justify-between">
                     <span>{t('home.avgSpeed')}</span>
                     <span className="font-mono text-shadow-green tabular-nums">~{metrics.avgExecutionNs} {t('home.ns')}</span>
                 </div>
             </section>
 
-            {/* WEVOX & Listing countdown */}
+            {/* WEVOX + listing countdown */}
             <section>
                 <div className="flex items-center gap-2 mb-3">
-                    <div className="w-7 h-7 rounded-lg bg-[#00E676]/10 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-[10px] bg-[#00E676]/10 flex items-center justify-center">
                         <Coins className="w-4 h-4 text-[#00E676]" />
                     </div>
-                    <h2 className="text-lg font-semibold text-[#F8FAFC]">{t('home.wevoxTitle')}</h2>
+                    <h2 className="text-base font-semibold text-[#F1F5F9]">{t('home.wevoxTitle')}</h2>
                 </div>
-                <div className="glass-card rounded-2xl p-5 space-y-4">
-                    <p className="text-sm text-[#94A3B8] leading-relaxed">
-                        {t('home.wevoxDesc')}
-                    </p>
+                <div className="bento-card p-5 space-y-4">
+                    <p className="text-sm text-[#94A3B8] leading-relaxed">{t('home.wevoxDesc')}</p>
                     {wevoxRate != null && wevoxRate > 0 && (
                         <p className="text-sm text-[#00E676] font-medium">
                             {t('home.wevoxPriceLabel')}: 1 WEVOX = ${(1 / wevoxRate).toFixed((1 / wevoxRate) < 1 ? 4 : 2)}

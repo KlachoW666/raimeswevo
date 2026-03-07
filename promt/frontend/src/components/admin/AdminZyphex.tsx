@@ -130,7 +130,7 @@ export default function AdminZyphex() {
 
     return (
         <div className="space-y-4">
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-5">
+            <div className="bento-card rounded-xl p-5">
                 <div className="flex items-center gap-2 text-[#00E676] font-bold mb-4">
                     <Coins size={20} />
                     Курс WEVOX
@@ -143,7 +143,7 @@ export default function AdminZyphex() {
                         step={1}
                         value={rate}
                         onChange={(e) => setRate(e.target.value)}
-                        className="flex-1 bg-[#0D1117] border border-[#30363D] rounded-xl py-2.5 px-4 text-white text-sm"
+                        className="flex-1 bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm"
                     />
                     <button
                         onClick={handleSaveRate}
@@ -157,7 +157,7 @@ export default function AdminZyphex() {
                 <p className="text-[10px] text-[#8B949E]">Начальный курс при полном пуле: 1 USDT = <span className="text-[#00E676] font-bold">{savedRate}</span> WEVOX</p>
             </div>
 
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-5">
+            <div className="bento-card rounded-xl p-5">
                 <div className="flex items-center gap-2 text-[#00E676] font-bold mb-4">
                     <Database size={20} />
                     Объём пула WEVOX
@@ -170,7 +170,7 @@ export default function AdminZyphex() {
                         step={1}
                         value={supply}
                         onChange={(e) => setSupply(e.target.value)}
-                        className="flex-1 bg-[#0D1117] border border-[#30363D] rounded-xl py-2.5 px-4 text-white text-sm font-mono"
+                        className="flex-1 bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm font-mono"
                     />
                     <button
                         onClick={handleSaveSupply}
@@ -184,20 +184,20 @@ export default function AdminZyphex() {
                 <p className="text-[10px] text-[#8B949E]">Текущий объём пула: <span className="text-[#00E676] font-bold font-mono">{savedSupply.toLocaleString()}</span> WEVOX</p>
             </div>
 
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-5">
+            <div className="bento-card rounded-xl p-5">
                 <div className="font-bold text-white mb-2">Экспорт для airdrop</div>
                 <p className="text-xs text-[#8B949E] mb-3">Скачать CSV со списком пользователей и балансами WEVOX (user_id, telegram_id, name, balance_wevox, total_exchanged_usdt, total_exchanged_wevox).</p>
                 <button
                     onClick={handleExport}
                     disabled={exporting}
-                    className="flex items-center gap-2 bg-[#1C2333] hover:bg-[#30363D] border border-[#30363D] text-white rounded-xl py-2.5 px-4 font-semibold text-sm disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 btn-secondary text-white rounded-xl py-2.5 px-4 font-semibold text-sm disabled:opacity-50 transition-colors"
                 >
                     <Download size={16} />
                     {exporting ? 'Скачивание...' : 'Скачать CSV'}
                 </button>
             </div>
 
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-5">
+            <div className="bento-card rounded-xl p-5">
                 <div className="flex items-center gap-2 text-[#00E676] font-bold mb-4">
                     <Ticket size={20} />
                     Промокоды
@@ -209,7 +209,7 @@ export default function AdminZyphex() {
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                         placeholder="Код (напр. PROMO)"
-                        className="bg-[#0D1117] border border-[#30363D] rounded-xl py-2.5 px-4 text-white text-sm uppercase"
+                        className="bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm uppercase"
                     />
                     <input
                         type="number"
@@ -218,7 +218,7 @@ export default function AdminZyphex() {
                         value={promoAmount}
                         onChange={(e) => setPromoAmount(e.target.value)}
                         placeholder="WEVOX"
-                        className="bg-[#0D1117] border border-[#30363D] rounded-xl py-2.5 px-4 text-white text-sm"
+                        className="bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm"
                     />
                     <input
                         type="number"
@@ -226,7 +226,7 @@ export default function AdminZyphex() {
                         value={promoMaxUses}
                         onChange={(e) => setPromoMaxUses(e.target.value)}
                         placeholder="Макс. использований"
-                        className="bg-[#0D1117] border border-[#30363D] rounded-xl py-2.5 px-4 text-white text-sm"
+                        className="bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm"
                     />
                 </div>
                 <button

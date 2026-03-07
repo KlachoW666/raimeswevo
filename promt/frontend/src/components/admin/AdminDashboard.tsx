@@ -21,8 +21,8 @@ export default function AdminDashboard() {
             {/* Main Stats */}
             <div className="grid grid-cols-2 gap-3">
                 <StatWidget icon={Users} label="Пользователи" value={totalUsers} sub={`${bannedUsers} забанено`} color="#58A6FF" />
-                <StatWidget icon={DollarSign} label="Общий баланс" value={`$${totalBalance.toFixed(0)}`} sub={`${activeUsers} активных`} color="#00D26A" />
-                <StatWidget icon={ArrowDownLeft} label="Всего депозитов" value={`$${totalDeposited.toFixed(0)}`} sub="За всё время" color="#00D26A" />
+                <StatWidget icon={DollarSign} label="Общий баланс" value={`$${totalBalance.toFixed(0)}`} sub={`${activeUsers} активных`} color="#00E676" />
+                <StatWidget icon={ArrowDownLeft} label="Всего депозитов" value={`$${totalDeposited.toFixed(0)}`} sub="За всё время" color="#00E676" />
                 <StatWidget icon={ArrowUpRight} label="Всего выводов" value={`$${totalWithdrawn.toFixed(0)}`} sub="За всё время" color="#FF6B6B" />
             </div>
 
@@ -47,13 +47,13 @@ export default function AdminDashboard() {
             )}
 
             {/* Recent Transactions */}
-            <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+            <div className="bento-card rounded-xl p-4">
                 <h4 className="text-xs font-bold text-[#8B949E] uppercase tracking-wider mb-3">Последние транзакции</h4>
                 <div className="space-y-2">
                     {transactions.slice(0, 5).map(tx => (
                         <div key={tx.id} className="flex items-center justify-between py-2 border-b border-[#30363D]/30 last:border-0">
                             <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'deposit' ? 'bg-[#00D26A]/10 text-[#00D26A]' : 'bg-[#FF6B6B]/10 text-[#FF6B6B]'}`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'deposit' ? 'bg-[#00E676]/10 text-[#00E676]' : 'bg-[#FF6B6B]/10 text-[#FF6B6B]'}`}>
                                     {tx.type === 'deposit' ? <ArrowDownLeft size={14} /> : <ArrowUpRight size={14} />}
                                 </div>
                                 <div>
@@ -62,10 +62,10 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className={`text-sm font-bold ${tx.type === 'deposit' ? 'text-[#00D26A]' : 'text-[#FF6B6B]'}`}>
+                                <div className={`text-sm font-bold ${tx.type === 'deposit' ? 'text-[#00E676]' : 'text-[#FF6B6B]'}`}>
                                     {tx.type === 'deposit' ? '+' : '-'}${tx.amount.toFixed(2)}
                                 </div>
-                                <div className={`text-[10px] font-bold uppercase ${tx.status === 'pending' ? 'text-yellow-500' : tx.status === 'approved' ? 'text-[#00D26A]' : 'text-[#FF4444]'}`}>
+                                <div className={`text-[10px] font-bold uppercase ${tx.status === 'pending' ? 'text-yellow-500' : tx.status === 'approved' ? 'text-[#00E676]' : 'text-[#FF4444]'}`}>
                                     {tx.status}
                                 </div>
                             </div>
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
 
 function StatWidget({ icon: Icon, label, value, sub, color }: any) {
     return (
-        <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-4">
+        <div className="bento-card rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}15` }}>
                     <Icon size={16} style={{ color }} />
@@ -94,7 +94,7 @@ function StatWidget({ icon: Icon, label, value, sub, color }: any) {
 
 function MiniStat({ icon: Icon, label, value }: any) {
     return (
-        <div className="bg-[#161B22] border border-[#30363D] rounded-xl p-3 text-center">
+        <div className="bento-card rounded-xl p-3 text-center">
             <Icon size={14} className="text-[#8B949E] mx-auto mb-1.5" />
             <div className="text-lg font-bold text-white font-mono">{value}</div>
             <div className="text-[10px] text-[#8B949E]">{label}</div>
