@@ -64,14 +64,16 @@ export default function AdminFinance() {
             {/* Tab Switcher */}
             <div className="flex bento-card rounded-xl p-1 gap-1">
                 <button
+                    type="button"
                     onClick={() => setTab('transactions')}
-                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${tab === 'transactions' ? 'bg-[#00E676] text-black' : 'text-[#8B949E]'}`}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all touch-manipulation min-h-[44px] ${tab === 'transactions' ? 'bg-[#00E676] text-black' : 'text-[#8B949E]'}`}
                 >
                     Транзакции
                 </button>
                 <button
+                    type="button"
                     onClick={() => setTab('limits')}
-                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${tab === 'limits' ? 'bg-[#00E676] text-black' : 'text-[#8B949E]'}`}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all touch-manipulation min-h-[44px] ${tab === 'limits' ? 'bg-[#00E676] text-black' : 'text-[#8B949E]'}`}
                 >
                     <Sliders size={12} className="inline mr-1" />Лимиты
                 </button>
@@ -83,9 +85,10 @@ export default function AdminFinance() {
                     <div className="flex gap-2 overflow-x-auto no-scrollbar">
                         {(['pending', 'all', 'approved', 'rejected'] as const).map(f => (
                             <button
+                                type="button"
                                 key={f}
                                 onClick={() => setFilter(f)}
-                                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${filter === f ? 'btn-primary' : 'bg-[#111820] text-[#8B949E] border border-white/[0.08]'}`}
+                                className={`px-3 py-2.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all touch-manipulation min-h-[44px] ${filter === f ? 'btn-primary' : 'bg-[#111820] text-[#8B949E] border border-white/[0.08]'}`}
                             >
                                 {f === 'all' ? 'Все' : f === 'pending' ? '⏳ Ожидание' : f === 'approved' ? 'Одобрены' : 'Отклонены'}
                             </button>
@@ -119,11 +122,11 @@ export default function AdminFinance() {
                                     <div className="text-[10px] text-[#8B949E]">{req.network} · {req.address.slice(0, 12)}… · {req.createdAt?.slice(0, 16).replace('T', ' ') || req.createdAt}</div>
                                     {req.status === 'pending' && (
                                         <div className="flex gap-2">
-                                            <button onClick={() => handleApprove(req.id)} className="w-8 h-8 rounded-lg bg-[#00E676]/10 flex items-center justify-center text-[#00E676] active:scale-90 transition-transform">
-                                                <Check size={16} />
+                                            <button type="button" onClick={() => handleApprove(req.id)} className="min-w-[44px] min-h-[44px] rounded-lg bg-[#00E676]/10 flex items-center justify-center text-[#00E676] active:scale-90 transition-transform touch-manipulation">
+                                                <Check size={18} />
                                             </button>
-                                            <button onClick={() => handleReject(req.id)} className="w-8 h-8 rounded-lg bg-[#FF4444]/10 flex items-center justify-center text-[#FF4444] active:scale-90 transition-transform">
-                                                <X size={16} />
+                                            <button type="button" onClick={() => handleReject(req.id)} className="min-w-[44px] min-h-[44px] rounded-lg bg-[#FF4444]/10 flex items-center justify-center text-[#FF4444] active:scale-90 transition-transform touch-manipulation">
+                                                <X size={18} />
                                             </button>
                                         </div>
                                     )}
@@ -151,12 +154,13 @@ export default function AdminFinance() {
                                 const enabled = settings.enabledNetworks.includes(net);
                                 return (
                                     <button
+                                        type="button"
                                         key={net}
                                         onClick={() => {
                                             useAdminStore.getState().toggleNetwork(net);
                                             hapticFeedback?.selectionChanged();
                                         }}
-                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${enabled ? 'bg-[#00E676] text-black' : 'bg-[#111820] text-[#8B949E] border border-white/[0.08]'}`}
+                                        className={`px-4 py-2.5 rounded-lg text-xs font-bold transition-all touch-manipulation min-h-[44px] ${enabled ? 'bg-[#00E676] text-black' : 'bg-[#111820] text-[#8B949E] border border-white/[0.08]'}`}
                                     >
                                         {net}
                                     </button>

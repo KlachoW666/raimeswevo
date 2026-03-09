@@ -120,12 +120,13 @@ export default function AdminTradeSettings() {
                         const enabled = settings.enabledPairs.includes(pair);
                         return (
                             <button
+                                type="button"
                                 key={pair}
                                 onClick={() => {
                                     togglePair(pair);
                                     hapticFeedback?.selectionChanged();
                                 }}
-                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${enabled ? 'bg-[#00E676]/20 text-[#00E676] border border-[#00E676]/30' : 'bg-[#0D1117] text-[#8B949E]/50 border border-[#30363D]/30'}`}
+                                className={`px-2.5 py-2 rounded-lg text-[11px] font-bold transition-all touch-manipulation min-h-[44px] ${enabled ? 'bg-[#00E676]/20 text-[#00E676] border border-[#00E676]/30' : 'bg-[#0D1117] text-[#8B949E]/50 border border-[#30363D]/30'}`}
                             >
                                 {pair}
                             </button>

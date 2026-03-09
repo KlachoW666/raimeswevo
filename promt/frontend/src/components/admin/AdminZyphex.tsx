@@ -193,9 +193,10 @@ export default function AdminZyphex() {
                         className="flex-1 min-w-[200px] bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm"
                     />
                     <button
+                        type="button"
                         onClick={handleSaveListingDate}
                         disabled={loadingListing}
-                        className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50"
+                        className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50 touch-manipulation min-h-[44px]"
                     >
                         <Save size={16} />
                         Сохранить
@@ -220,9 +221,10 @@ export default function AdminZyphex() {
                         className="flex-1 bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm"
                     />
                     <button
+                        type="button"
                         onClick={handleSaveRate}
                         disabled={loading}
-                        className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50"
+                        className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50 touch-manipulation min-h-[44px]"
                     >
                         <Save size={16} />
                         Сохранить
@@ -247,9 +249,10 @@ export default function AdminZyphex() {
                         className="flex-1 bg-[#111820] border border-white/[0.08] rounded-xl py-2.5 px-4 text-white text-sm font-mono"
                     />
                     <button
+                        type="button"
                         onClick={handleSaveSupply}
                         disabled={loadingSupply}
-                        className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50"
+                        className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50 touch-manipulation min-h-[44px]"
                     >
                         <Save size={16} />
                         Сохранить
@@ -262,9 +265,10 @@ export default function AdminZyphex() {
                 <div className="font-bold text-white mb-2">Экспорт для airdrop</div>
                 <p className="text-xs text-[#8B949E] mb-3">Скачать CSV со списком пользователей и балансами WEVOX (user_id, telegram_id, name, balance_wevox, total_exchanged_usdt, total_exchanged_wevox).</p>
                 <button
+                    type="button"
                     onClick={handleExport}
                     disabled={exporting}
-                    className="flex items-center gap-2 btn-secondary text-white rounded-xl py-2.5 px-4 font-semibold text-sm disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 btn-secondary text-white rounded-xl py-2.5 px-4 font-semibold text-sm disabled:opacity-50 transition-colors touch-manipulation min-h-[44px]"
                 >
                     <Download size={16} />
                     {exporting ? 'Скачивание...' : 'Скачать CSV'}
@@ -304,9 +308,10 @@ export default function AdminZyphex() {
                     />
                 </div>
                 <button
+                    type="button"
                     onClick={handleCreatePromo}
                     disabled={promoCreating}
-                    className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50"
+                    className="flex items-center gap-2 bg-[#00D26A] text-black rounded-xl py-2.5 px-4 font-bold text-sm disabled:opacity-50 touch-manipulation min-h-[44px]"
                 >
                     <Ticket size={16} />
                     {promoCreating ? 'Создание...' : 'Создать промокод'}

@@ -53,12 +53,16 @@ export default function AdminSystemSettings() {
             `${u.id},${u.name},${u.balance},${u.isBanned},${u.vipStatus},${u.totalDeposited},${u.totalWithdrawn},${u.referralCount},${u.registeredAt}`
         ).join('\n');
         const blob = new Blob([headers + rows], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
+        const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = blobUrl;
         a.download = 'users_export.csv';
+        a.setAttribute('target', '_blank');
+        a.rel = 'noopener';
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
         addAuditEntry({ adminId: 'admin', action: 'Экспорт данных', details: `${users.length} пользователей` });
     };
 
@@ -77,8 +81,9 @@ export default function AdminSystemSettings() {
                         </div>
                     </div>
                     <button
+                        type="button"
                         onClick={handleToggleMaintenance}
-                        className={`w-12 h-7 rounded-full transition-all relative ${settings.maintenanceMode ? 'bg-[#FF6B6B]' : 'bg-white/[0.08]'}`}
+                        className={`w-12 h-7 rounded-full transition-all relative touch-manipulation ${settings.maintenanceMode ? 'bg-[#FF6B6B]' : 'bg-white/[0.08]'}`}
                     >
                         <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all ${settings.maintenanceMode ? 'right-1' : 'left-1'}`} />
                     </button>
@@ -98,8 +103,9 @@ export default function AdminSystemSettings() {
                         </div>
                     </div>
                     <button
+                        type="button"
                         onClick={handleToggleLanguage}
-                        className="px-4 py-2 rounded-xl bg-[#0D1117] border border-white/[0.08] text-sm font-bold text-white active:scale-95 transition-transform"
+                        className="px-4 py-2 rounded-xl bg-[#0D1117] border border-white/[0.08] text-sm font-bold text-white active:scale-95 transition-transform touch-manipulation min-h-[44px]"
                     >
                         {settings.defaultLanguage === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN'}
                     </button>
@@ -118,8 +124,9 @@ export default function AdminSystemSettings() {
                         <div key={id} className="flex items-center justify-between bg-[#0D1117] rounded-lg px-3 py-2.5 border border-white/[0.08]/30">
                             <span className="text-sm text-white font-mono">{id}</span>
                             <button
+                                type="button"
                                 onClick={() => handleRemoveAdmin(id)}
-                                className="w-7 h-7 rounded-lg bg-[#FF4444]/10 flex items-center justify-center text-[#FF4444] active:scale-90 transition-transform"
+                                className="min-w-[44px] min-h-[44px] rounded-lg bg-[#FF4444]/10 flex items-center justify-center text-[#FF4444] active:scale-90 transition-transform touch-manipulation"
                             >
                                 <Trash2 size={12} />
                             </button>
@@ -136,9 +143,10 @@ export default function AdminSystemSettings() {
                         className="flex-1 bg-[#0D1117] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm font-mono placeholder:text-[#8B949E]/50 outline-none focus:border-[#00D26A]/50 transition-colors"
                     />
                     <button
+                        type="button"
                         onClick={handleAddAdmin}
                         disabled={!newAdminId.trim()}
-                        className="px-3 py-2 rounded-lg bg-[#00D26A] text-black active:scale-95 transition-transform disabled:opacity-40"
+                        className="min-h-[44px] px-3 py-2 rounded-lg bg-[#00D26A] text-black active:scale-95 transition-transform disabled:opacity-40 touch-manipulation"
                     >
                         <UserPlus size={16} />
                     </button>
@@ -147,8 +155,9 @@ export default function AdminSystemSettings() {
 
             {/* Export Data */}
             <button
+                type="button"
                 onClick={handleExportCSV}
-                className="w-full bento-card hover:border-[#00D26A]/50 rounded-xl p-4 flex items-center gap-4 transition-all active:scale-[0.98]"
+                className="w-full bento-card hover:border-[#00D26A]/50 rounded-xl p-4 flex items-center gap-4 transition-all active:scale-[0.98] touch-manipulation min-h-[52px]"
             >
                 <div className="w-10 h-10 rounded-xl bg-[#00D26A]/10 flex items-center justify-center text-[#00D26A]">
                     <Download size={20} />

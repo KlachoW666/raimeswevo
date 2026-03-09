@@ -75,11 +75,16 @@ export async function downloadZyphexExportCsv(adminUserId: string): Promise<void
   const res = await fetch(url);
   if (!res.ok) throw new Error('Export failed');
   const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = blobUrl;
   a.download = 'wevox_airdrop_export.csv';
+  a.setAttribute('target', '_blank');
+  a.rel = 'noopener';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(a.href);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
 }
 
 export type PromoCodeItem = {

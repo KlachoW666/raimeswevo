@@ -64,9 +64,10 @@ export default function AdminBroadcast() {
                 <div className="flex gap-2 mb-4">
                     {audienceOptions.map(({ key, label, icon: Icon }) => (
                         <button
+                            type="button"
                             key={key}
                             onClick={() => { setAudience(key); hapticFeedback?.selectionChanged(); }}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold transition-all ${audience === key ? 'btn-primary' : 'bg-[#111820] text-[#8B949E] border border-white/[0.08]'}`}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold transition-all touch-manipulation min-h-[44px] ${audience === key ? 'btn-primary' : 'bg-[#111820] text-[#8B949E] border border-white/[0.08]'}`}
                         >
                             <Icon size={12} />
                             {label}
@@ -96,9 +97,10 @@ export default function AdminBroadcast() {
                 )}
 
                 <button
+                    type="button"
                     onClick={handleSend}
                     disabled={!message.trim() || sending}
-                    className="w-full mt-4 py-3 rounded-xl bg-[#00E676] text-black font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:active:scale-100"
+                    className="w-full mt-4 py-3 rounded-xl bg-[#00E676] text-black font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:active:scale-100 touch-manipulation min-h-[48px]"
                 >
                     <Send size={16} />
                     {sending ? 'Отправка...' : 'Отправить рассылку'}
