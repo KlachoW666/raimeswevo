@@ -1,16 +1,15 @@
 import { ShieldAlert, LayoutDashboard, Users, DollarSign, Bot, Megaphone, Settings, ScrollText, Coins } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 import { useNavigate } from 'react-router-dom';
-import { useState, lazy, Suspense } from 'react';
+import { useState } from 'react';
 import UserManagementModal from '../components/features/UserManagementModal';
-
-const AdminDashboard = lazy(() => import('../components/admin/AdminDashboard').then(m => ({ default: m.default })));
-const AdminFinance = lazy(() => import('../components/admin/AdminFinance').then(m => ({ default: m.default })));
-const AdminTradeSettings = lazy(() => import('../components/admin/AdminTradeSettings').then(m => ({ default: m.default })));
-const AdminBroadcast = lazy(() => import('../components/admin/AdminBroadcast').then(m => ({ default: m.default })));
-const AdminSystemSettings = lazy(() => import('../components/admin/AdminSystemSettings').then(m => ({ default: m.default })));
-const AdminAuditLog = lazy(() => import('../components/admin/AdminAuditLog').then(m => ({ default: m.default })));
-const AdminZyphex = lazy(() => import('../components/admin/AdminZyphex').then(m => ({ default: m.default })));
+import AdminDashboard from '../components/admin/AdminDashboard';
+import AdminFinance from '../components/admin/AdminFinance';
+import AdminTradeSettings from '../components/admin/AdminTradeSettings';
+import AdminBroadcast from '../components/admin/AdminBroadcast';
+import AdminSystemSettings from '../components/admin/AdminSystemSettings';
+import AdminAuditLog from '../components/admin/AdminAuditLog';
+import AdminZyphex from '../components/admin/AdminZyphex';
 
 type AdminTab = 'dashboard' | 'users' | 'finance' | 'trade' | 'broadcast' | 'wevox' | 'settings' | 'audit';
 
@@ -108,11 +107,9 @@ export default function AdminPage() {
                 ))}
             </div>
 
-            {/* Content */}
+            {/* Content — все компоненты в одном чанке, без динамической подгрузки (стабильно в Telegram WebView) */}
             <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pb-4">
-                <Suspense fallback={<div className="flex items-center justify-center py-12 text-[#64748B] text-sm">Загрузка…</div>}>
-                    {renderContent()}
-                </Suspense>
+                {renderContent()}
             </div>
 
             {/* User Modal */}
