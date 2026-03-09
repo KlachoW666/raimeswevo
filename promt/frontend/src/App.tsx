@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useState, lazy, Suspense, Component, type ReactNode } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Header from './components/Layout/Header';
 import BottomNav from './components/Layout/BottomNav';
 import PageContainer from './components/Layout/PageContainer';
@@ -20,6 +20,15 @@ const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m
 import AuthPage from './pages/AuthPage';
 
 const isInsideTelegram = () => typeof window !== 'undefined' && !!window.Telegram?.WebApp;
+
+function AdminRouteWithBoundary() {
+  const navigate = useNavigate();
+  return (
+    <AdminRouteErrorBoundary onGoHome={() => navigate('/')}>
+      <AdminPage />
+    </AdminRouteErrorBoundary>
+  );
+}
 
 // ═══════════════════════════════════════════
 // Trade engine — runs globally, not just on HomePage
@@ -196,6 +205,44 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: bo
   }
 }
 
+/** Fallback при сбое загрузки только админ-панели (чанк 404 и т.д.) — не роняем всё приложение */
+function AdminRouteErrorFallback({ onGoHome }: { onGoHome: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center text-[#F8FAFC]">
+      <p className="text-[#94A3B8] mb-4">Не удалось загрузить админ-панель.</p>
+      <div className="flex flex-wrap gap-3 justify-center">
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-5 py-2.5 rounded-xl bg-[#00E676] text-black font-semibold"
+        >
+          Обновить
+        </button>
+        <button
+          type="button"
+          onClick={onGoHome}
+          className="px-5 py-2.5 rounded-xl surface-raised text-[#F8FAFC] font-semibold"
+        >
+          На главную
+        </button>
+      </div>
+    </div>
+  );
+}
+
+class AdminRouteErrorBoundary extends Component<{ children: ReactNode; onGoHome: () => void }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return <AdminRouteErrorFallback onGoHome={this.props.onGoHome} />;
+    }
+    return this.props.children;
+  }
+}
+
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <div
     className="flex flex-col overflow-hidden bg-bg-main text-text-main"
@@ -302,7 +349,7 @@ function App() {
           <Route path="/referrals" element={isAuthenticated ? <AppLayout><ReferralPage /></AppLayout> : <Navigate to="/auth" />} />
           <Route path="/stats" element={isAuthenticated ? <AppLayout><StatsPage /></AppLayout> : <Navigate to="/auth" />} />
           <Route path="/settings" element={isAuthenticated ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/auth" />} />
-          <Route path="/admin" element={isAuthenticated ? <AppLayout><AdminPage /></AppLayout> : <Navigate to="/auth" />} />
+          <Route path="/admin" element={isAuthenticated ? <AppLayout><AdminRouteWithBoundary /></AppLayout> : <Navigate to="/auth" />} />
 
           <Route path="*" element={<Navigate to="/" />} />
           </Routes>

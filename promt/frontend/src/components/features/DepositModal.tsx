@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, Component, type ReactNode } from 'react';
 import { X, Copy, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import QRCodeLib from 'qrcode';
 import type { Network } from '../../store/walletStore';
 import { MockAPI } from '../../api/mockServices';
 import { useTelegram } from '../../hooks/useTelegram';
@@ -8,6 +9,48 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useUserStore } from '../../store/userStore';
 
 const NETWORKS: Network[] = ['TON', 'BSC', 'BNB', 'TRC', 'SOL', 'BTC', 'ETH'];
+
+/** QR через canvas → data URL → img: работает в Telegram WebView, когда SVG (react-qr-code) падает */
+function QRCodeCanvasFallback({ value, size = 200 }: { value: string; size?: number }) {
+    const [dataUrl, setDataUrl] = useState<string | null>(null);
+    useEffect(() => {
+        if (!value) return;
+        QRCodeLib.toDataURL(value, { width: size, margin: 1, errorCorrectionLevel: 'M' })
+            .then(setDataUrl)
+            .catch(() => setDataUrl(null));
+    }, [value, size]);
+    if (!dataUrl) {
+        return (
+            <div className="w-[200px] h-[200px] flex items-center justify-center p-3 bg-white rounded-3xl">
+                <span className="text-[10px] font-mono text-black break-all text-center">Скопируйте адрес ниже</span>
+            </div>
+        );
+    }
+    return (
+        <img
+            src={dataUrl}
+            alt="QR Code"
+            width={size}
+            height={size}
+            className="rounded-lg"
+            style={{ width: size, height: size }}
+        />
+    );
+}
+
+/** Ловит ошибку рендера только QR (SVG в WebView); показывает canvas-версию вместо «Ошибка окна пополнения» */
+class QRCodeErrorBoundary extends Component<{ value: string; children: ReactNode }, { hasError: boolean }> {
+    state = { hasError: false };
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+    render() {
+        if (this.state.hasError) {
+            return <QRCodeCanvasFallback value={this.props.value} />;
+        }
+        return this.props.children;
+    }
+}
 
 /** Ловит ошибки внутри модалки (например QR-код в WebView), чтобы не ронять всё приложение */
 class DepositModalErrorBoundary extends Component<{ onClose: () => void; children: ReactNode }> {
@@ -194,13 +237,16 @@ function DepositModalContent({ onClose }: { onClose: () => void }) {
                                 </button>
                             </div>
                         )}
+                        {/* QR: сначала SVG (react-qr-code); при ошибке в WebView — canvas (qrcode → img) */}
                         <div className="inline-flex items-center justify-center p-4 rounded-3xl bg-white mb-8 w-56 h-56 mx-auto relative shadow-[0_8px_30px_rgba(0,0,0,0.3)]" style={{ width: 224, height: 224 }}>
                             {loading || (!address && !loadError) ? (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white rounded-3xl">
                                     <Loader2 className="animate-spin text-black" size={36} />
                                 </div>
                             ) : (
-                                <QRCodeSafe value={address} />
+                                <QRCodeErrorBoundary value={address}>
+                                    <QRCodeSafe value={address} />
+                                </QRCodeErrorBoundary>
                             )}
                         </div>
 
